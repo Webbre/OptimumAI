@@ -449,7 +449,7 @@
             try {
                 // Stap 1: Gemini eerste aanzet
                 status.innerText = "Stap 1: Gemini analyseert...";
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiKey}`;
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${geminiKey}`;
                 
                 // We sturen alleen de huidige prompt, context meesturen kan later toegevoegd worden
                 const res1 = await fetch(geminiUrl, {
