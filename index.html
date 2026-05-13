@@ -231,8 +231,8 @@
     </div>
 
     <script>
-        // De correcte modelnaam uit jouw console-test
-        const vastGeminiModel = 'gemini-2.5-pro'; 
+        // De correcte modelnaam aangepast naar flash om quota problemen te voorkomen
+        const vastGeminiModel = 'gemini-2.5-flash'; 
 
         let chats = JSON.parse(localStorage.getItem('webbre_chats') || '[]');
         let currentChatId = null;
@@ -347,7 +347,7 @@
             document.getElementById('userPrompt').value = '';
 
             try {
-                // STAP 1: Gebruik het model 2.5-pro
+                // STAP 1: Gebruik het model 2.5-flash
                 status.innerText = `Stap 1: ${vastGeminiModel} denkt na...`;
                 const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${vastGeminiModel}:generateContent?key=${geminiKey}`;
                 
