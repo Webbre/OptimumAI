@@ -226,7 +226,7 @@
         <input type="password" id="claudeKey" style="width:100%; margin-bottom:10px; padding:8px; box-sizing:border-box;">
 
         <label style="font-size: 12px; font-weight: bold;">Claude Model:</label>
-        <input type="text" id="claudeModel" placeholder="Bijv. claude-3-5-sonnet-20241022" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
+        <input type="text" id="claudeModel" placeholder="Bijv. claude-3-haiku-20240307" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
         
         <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">Sluiten en opslaan</button>
     </div>
@@ -245,16 +245,17 @@
         function loadKeys() {
             document.getElementById('geminiKey').value = localStorage.getItem('webbreGemini') || '';
             document.getElementById('claudeKey').value = localStorage.getItem('webbreClaude') || '';
-            document.getElementById('claudeModel').value = localStorage.getItem('webbreClaudeModel') || 'claude-3-5-sonnet-20241022';
+            document.getElementById('claudeModel').value = localStorage.getItem('webbreClaudeModel') || 'claude-3-haiku-20240307';
         }
 
         function toggleSettings() {
             const modal = document.getElementById('settings-modal');
             
             if (modal.style.display === 'block') {
-                const gKey = document.getElementById('geminiKey').value;
-                const cKey = document.getElementById('claudeKey').value;
-                const cModel = document.getElementById('claudeModel').value;
+                // We gebruiken .trim() om onzichtbare spaties te verwijderen
+                const gKey = document.getElementById('geminiKey').value.trim();
+                const cKey = document.getElementById('claudeKey').value.trim();
+                const cModel = document.getElementById('claudeModel').value.trim();
                 
                 localStorage.setItem('webbreGemini', gKey);
                 localStorage.setItem('webbreClaude', cKey);
@@ -325,10 +326,11 @@
         }
 
         async function startWorkflow() {
-            const prompt = document.getElementById('userPrompt').value;
-            const geminiKey = localStorage.getItem('webbreGemini');
-            const claudeKey = localStorage.getItem('webbreClaude');
-            const claudeModel = localStorage.getItem('webbreClaudeModel') || 'claude-3-5-sonnet-20241022';
+            const prompt = document.getElementById('userPrompt').value.trim();
+            // We halen de sleutels op en knippen eventuele onzichtbare spaties weg
+            const geminiKey = (localStorage.getItem('webbreGemini') || '').trim();
+            const claudeKey = (localStorage.getItem('webbreClaude') || '').trim();
+            const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-3-haiku-20240307').trim();
             const status = document.getElementById('status');
 
             if (!prompt || !geminiKey || !claudeKey) {
@@ -390,7 +392,9 @@
 
                 if (!claudeRes.ok) {
                     const errClaude = await claudeRes.json();
-                    throw new Error(`Claude API fout: ${errClaude.error ? errClaude.error.message : 'Netwerkfout'}`);
+                    let detailMessage = errClaude.error ? errClaude.error.message : 'Onbekende API fout';
+                    let foutType = errClaude.error ? errClaude.error.type : 'Onbekend';
+                    throw new Error(`Claude API fout (${foutType}): ${detailMessage}`);
                 }
 
                 const data2 = await claudeRes.json();
