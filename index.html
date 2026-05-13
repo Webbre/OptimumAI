@@ -122,6 +122,41 @@
             border: 1px solid #cc0000;
         }
 
+        /* Styling voor het tijdelijke laadscherm (preloader) */
+        .loading-steps {
+            align-self: flex-start;
+            background-color: transparent;
+            padding: 5px 15px;
+            font-size: 13px;
+            color: #5f6368;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-style: italic;
+        }
+        
+        .loading-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* CSS Animatie voor de spinner */
+        .spinner {
+            border: 2px solid #e8e6e1;
+            border-top: 2px solid #8e1f2f;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Input area onderaan */
         #input-container {
             padding: 20px;
@@ -206,11 +241,10 @@
 
         <div id="input-container">
             <div class="input-wrapper">
-                <div id="status" style="font-size: 12px; color: #8e1f2f; font-weight: bold;"></div>
                 <textarea id="userPrompt" rows="3" placeholder="Stel een vraag..."></textarea>
                 <div class="controls">
                     <span class="api-keys-link" onclick="toggleSettings()">Instellingen (API & Modellen)</span>
-                    <button class="send-btn" onclick="startWorkflow()">Verstuur</button>
+                    <button class="send-btn" id="sendBtn" onclick="startWorkflow()">Verstuur</button>
                 </div>
             </div>
         </div>
@@ -246,13 +280,11 @@
             document.getElementById('geminiKey').value = localStorage.getItem('webbreGemini') || '';
             document.getElementById('claudeKey').value = localStorage.getItem('webbreClaude') || '';
             
-            // Controleer op oude Claude 3 modellen en vervang deze door de nieuwe Claude 4.5 Haiku
             let opgeslagenClaudeModel = localStorage.getItem('webbreClaudeModel');
             if (!opgeslagenClaudeModel || opgeslagenClaudeModel.includes('claude-3')) {
                 opgeslagenClaudeModel = 'claude-haiku-4-5-20251001'; 
                 localStorage.setItem('webbreClaudeModel', opgeslagenClaudeModel);
             }
-            
             document.getElementById('claudeModel').value = opgeslagenClaudeModel;
         }
 
@@ -337,7 +369,8 @@
             const geminiKey = (localStorage.getItem('webbreGemini') || '').trim();
             const claudeKey = (localStorage.getItem('webbreClaude') || '').trim();
             const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-haiku-4-5-20251001').trim();
-            const status = document.getElementById('status');
+            const sendBtn = document.getElementById('sendBtn');
+            const chatWindow = document.getElementById('chat-window');
 
             if (!prompt || !geminiKey || !claudeKey) {
                 alert("Zorg dat je een vraag hebt getypt én de API keys hebt ingesteld.");
@@ -355,14 +388,24 @@
                 });
             }
 
+            // Blokkeer de knop tijdens het laden
+            sendBtn.disabled = true;
+            sendBtn.style.backgroundColor = "#ccc";
+            
             appendMessage('user', prompt);
             document.getElementById('userPrompt').value = '';
 
+            // Maak het tijdelijke visuele laadscherm aan
+            const loadingNode = document.createElement('div');
+            loadingNode.className = 'loading-steps';
+            chatWindow.appendChild(loadingNode);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
             try {
                 // STAP 1: Gemini eerste aanroep
-                status.innerText = `Stap 1: ${vastGeminiModel} denkt na...`;
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${vastGeminiModel}:generateContent?key=${geminiKey}`;
+                loadingNode.innerHTML = `<div class="loading-step"><div class="spinner"></div> Gemini maakt een aanzet...</div>`;
                 
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${vastGeminiModel}:generateContent?key=${geminiKey}`;
                 const res1 = await fetch(geminiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -378,9 +421,12 @@
                 const draft = data1.candidates[0].content.parts[0].text;
 
                 // STAP 2: Claude feedback
-                status.innerText = `Stap 2: ${claudeModel} controleert...`;
+                loadingNode.innerHTML = `
+                    <div class="loading-step">✓ Gemini heeft een aanzet gemaakt</div>
+                    <div class="loading-step"><div class="spinner"></div> Claude controleert...</div>
+                `;
+
                 const claudeUrl = "https://api.anthropic.com/v1/messages";
-                
                 const claudeRes = await fetch(claudeUrl, {
                     method: "POST",
                     headers: {
@@ -406,20 +452,31 @@
                 const data2 = await claudeRes.json();
                 const feedback = data2.content[0].text;
 
-                // STAP 3: Gemini finale versie
-                status.innerText = "Stap 3: Gemini optimaliseert eindresultaat...";
+                // STAP 3: Gemini finale versie (met strikte instructie tegen gebabbel)
+                loadingNode.innerHTML = `
+                    <div class="loading-step">✓ Gemini heeft een aanzet gemaakt</div>
+                    <div class="loading-step">✓ Claude heeft gecontroleerd</div>
+                    <div class="loading-step"><div class="spinner"></div> Gemini optimaliseert...</div>
+                `;
+
+                const striktePrompt = `Herschrijf het volgende antwoord op de vraag met behulp van de gegeven feedback. Belangrijk: Geef UITSLUITEND het herschreven eindresultaat terug. Voeg absoluut geen inleidende of afsluitende zinnen toe (zoals "Hier is het aangepaste antwoord" of "Ik heb het verbeterd"). Reageer niet op de feedback zelf en begin direct met de eerste letter van de definitieve tekst.\n\nVraag: ${prompt}\n\nEerste antwoord: ${draft}\n\nFeedback: ${feedback}`;
+
                 const res3 = await fetch(geminiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: `Verbeter dit antwoord met deze feedback: ${feedback}. Vraag: ${prompt}. Eerste antwoord: ${draft}` }] }] })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: striktePrompt }] }] })
                 });
                 
                 const data3 = await res3.json();
                 const final = data3.candidates[0].content.parts[0].text;
 
-                status.innerText = "";
+                // Verwijder het tijdelijke laadscherm volledig
+                loadingNode.remove();
+
+                // Toon het opgeschoonde eindresultaat
                 appendMessage('ai', final);
                 
+                // Sla alleen de prompt en het antwoord op in de browser, geen laadstappen
                 const chatIndex = chats.findIndex(c => c.id === currentChatId);
                 chats[chatIndex].messages.push({ role: 'user', content: prompt });
                 chats[chatIndex].messages.push({ role: 'ai', content: final });
@@ -428,8 +485,12 @@
 
             } catch (e) {
                 console.error(e);
-                status.innerText = "";
+                loadingNode.remove(); // Verberg het laadscherm ook bij een fout
                 appendMessage('error', `Fout: ${e.message}`);
+            } finally {
+                // Herstel de verzendknop
+                sendBtn.disabled = false;
+                sendBtn.style.backgroundColor = "#8e1f2f";
             }
         }
     </script>
