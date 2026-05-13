@@ -3,116 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ewout's OptimumAI LLM</title>
+    <title>Webbre OptimumAI LLM</title>
+    <!-- Voorkomt de favicon.ico 404 fout in je console -->
+    <link rel="icon" href="data:,">
     <style>
-        /* Basisstijl en AS Roma Kleurenpalet */
-        :root {
-            --roma-red: #8e1f2f;
-            --roma-red-hover: #701724;
-            --roma-yellow: #f0b516;
-            --roma-yellow-hover: #d19c11;
-            --bg-warm: #fcfbf9;
-            --sidebar-bg: #f5f2ec;
-            --text-dark: #2c2c2c;
-            --border-color: #e5dfd3;
-        }
-
+        /* Basisstijl en layout met warme achtergrond */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             display: flex;
             height: 100vh;
-            background-color: var(--bg-warm);
-            color: var(--text-dark);
+            background-color: #faf9f6; 
         }
 
-        /* Zijbalk voor geschiedenis */
+        /* Zijbalk in AS Roma Karmijnrood */
         #sidebar {
-            width: 280px;
-            background-color: var(--sidebar-bg);
-            border-right: 1px solid var(--border-color);
+            width: 260px;
+            background-color: #8e1f2f;
+            color: white;
             display: flex;
             flex-direction: column;
             padding: 15px;
             overflow-y: auto;
         }
 
-        .sidebar-header {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--roma-red);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
+        /* Nieuwe chat knop in AS Roma Goudgeel */
         .new-chat-btn {
-            background: var(--roma-yellow);
-            color: var(--text-dark);
+            background: #f0b516;
+            color: #8e1f2f;
             border: none;
             padding: 12px;
-            border-radius: 8px; /* Iets minder rond voor een stoerdere look */
+            border-radius: 20px;
             cursor: pointer;
             font-weight: bold;
             margin-bottom: 20px;
-            transition: background-color 0.2s;
         }
 
-        .new-chat-btn:hover {
-            background: var(--roma-yellow-hover);
-        }
-
-        .date-group-header {
-            font-size: 0.8rem;
-            color: #666;
+        .date-header {
+            font-size: 12px;
+            color: #f0b516;
             margin-top: 15px;
             margin-bottom: 5px;
-            padding-bottom: 3px;
-            border-bottom: 1px solid var(--border-color);
+            font-weight: bold;
             text-transform: uppercase;
         }
 
         .history-item {
             padding: 10px;
             margin-bottom: 5px;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            transition: background-color 0.2s;
+            color: #fff;
         }
 
         .history-item:hover {
-            background-color: #ebe5db;
+            background-color: rgba(255, 255, 255, 0.1);
         }
 
         .history-item.active {
-            background-color: var(--roma-red);
-            color: white;
+            background-color: #f0b516;
+            color: #8e1f2f;
+            font-weight: bold;
         }
 
-        /* Hoofdscherm chat */
         #main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             position: relative;
-        }
-
-        .main-header {
-            padding: 15px 20px;
-            background: white;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .main-header h2 {
-            margin: 0;
-            font-size: 1.2rem;
-            color: var(--text-dark);
         }
 
         #chat-window {
@@ -126,33 +88,36 @@
 
         .message {
             max-width: 80%;
-            padding: 14px 18px;
-            border-radius: 12px;
-            line-height: 1.6;
+            padding: 12px 16px;
+            border-radius: 15px;
+            line-height: 1.5;
             font-size: 15px;
         }
 
         .user-message {
             align-self: flex-end;
-            background-color: #ebe5db;
-            color: var(--text-dark);
-            border-bottom-right-radius: 2px;
+            background-color: #e9e9f0;
+            color: #1f1f1f;
         }
 
         .ai-message {
             align-self: flex-start;
             background-color: white;
-            color: var(--text-dark);
-            border: 1px solid var(--border-color);
-            border-bottom-left-radius: 2px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            color: #1f1f1f;
+            border: 1px solid #e3e3e3;
         }
 
-        /* Input area onderaan */
+        .error-message {
+            align-self: flex-start;
+            background-color: #fce4e4;
+            color: #cc0000;
+            border: 1px solid #cc0000;
+        }
+
         #input-container {
             padding: 20px;
             background: white;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid #ddd;
         }
 
         .input-wrapper {
@@ -167,16 +132,10 @@
             width: 100%;
             padding: 15px;
             border: 1px solid #ccc;
-            border-radius: 8px;
+            border-radius: 12px;
             resize: none;
             font-size: 16px;
             box-sizing: border-box;
-            background-color: var(--bg-warm);
-        }
-        
-        textarea:focus {
-            outline: none;
-            border-color: var(--roma-red);
         }
 
         .controls {
@@ -187,27 +146,22 @@
 
         .api-keys-link {
             font-size: 13px;
-            color: var(--roma-red);
+            color: #8e1f2f;
             text-decoration: underline;
             cursor: pointer;
+            font-weight: bold;
         }
 
         button.send-btn {
-            background-color: var(--roma-red);
+            background-color: #8e1f2f;
             color: white;
             border: none;
-            padding: 10px 28px;
-            border-radius: 8px;
+            padding: 10px 24px;
+            border-radius: 20px;
             cursor: pointer;
             font-weight: bold;
-            transition: background-color 0.2s;
         }
 
-        button.send-btn:hover {
-            background-color: var(--roma-red-hover);
-        }
-
-        /* Instellingen scherm */
         #settings-modal {
             display: none;
             position: fixed;
@@ -215,85 +169,47 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 1000;
             border-radius: 12px;
-            width: 300px;
-        }
-
-        #settings-modal h3 {
-            margin-top: 0;
-            color: var(--roma-red);
-        }
-        
-        #settings-modal button {
-            width: 100%;
-            background-color: var(--roma-yellow);
-            border: none;
-            padding: 10px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        /* Overlay voor als modal open is */
-        #modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-        }
-
-        /* Mobiele optimalisatie */
-        @media (max-width: 768px) {
-            #sidebar { display: none; }
-            .message { max-width: 95%; }
+            border: 2px solid #8e1f2f;
         }
     </style>
 </head>
 <body>
 
     <div id="sidebar">
-        <div class="sidebar-header">Ewout's OptimumAI</div>
         <button class="new-chat-btn" onclick="startNewChat()">+ Nieuw gesprek</button>
         <div id="history-list"></div>
     </div>
 
     <div id="main-content">
-        <div class="main-header">
-            <h2 id="current-chat-title">Nieuw gesprek</h2>
-        </div>
         <div id="chat-window">
-            <!-- Berichten verschijnen hier -->
-            <div class="message ai-message" id="welcome-msg">Welkom bij Ewout's OptimumAI LLM! Typ hieronder een vraag om de workflow (Gemini -> Claude -> Gemini) te starten.</div>
+            <div class="message ai-message">Welkom bij Webbre OptimumAI LLM. Hoe kan ik je vandaag helpen?</div>
         </div>
 
         <div id="input-container">
             <div class="input-wrapper">
-                <div id="status" style="font-size: 13px; color: var(--roma-red); font-weight: bold; min-height: 18px;"></div>
-                <textarea id="userPrompt" rows="3" placeholder="Wat wil je weten?"></textarea>
+                <div id="status" style="font-size: 12px; color: #8e1f2f; font-weight: bold;"></div>
+                <textarea id="userPrompt" rows="3" placeholder="Typ hier je prompt..."></textarea>
                 <div class="controls">
-                    <span class="api-keys-link" onclick="toggleSettings()">Instellingen</span>
+                    <span class="api-keys-link" onclick="toggleSettings()">Instellingen (API)</span>
                     <button class="send-btn" onclick="startWorkflow()">Verstuur</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="modal-overlay" onclick="toggleSettings()"></div>
     <div id="settings-modal">
-        <h3>API instellingen</h3>
-        <input type="password" id="geminiKey" placeholder="Gemini API Key" style="width:100%; margin-bottom:15px; padding:10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-        <input type="password" id="claudeKey" placeholder="Claude API Key" style="width:100%; margin-bottom:15px; padding:10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-        <button onclick="toggleSettings()">Sluiten en opslaan</button>
+        <h3 style="color: #8e1f2f;">API Sleutels Opslaan</h3>
+        <input type="password" id="geminiKey" placeholder="Plak Gemini Key" style="width:100%; margin-bottom:10px; padding:8px;">
+        <input type="password" id="claudeKey" placeholder="Plak Claude Key" style="width:100%; margin-bottom:10px; padding:8px;">
+        <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">Opslaan</button>
     </div>
 
     <script>
-        // Data inladen
-        let chats = JSON.parse(localStorage.getItem('webbre_ai_chats') || '[]');
+        let chats = JSON.parse(localStorage.getItem('webbre_chats') || '[]');
         let currentChatId = null;
 
         window.onload = () => {
@@ -301,35 +217,18 @@
             renderHistory();
         };
 
-        // --- Helper functies voor Datum ---
-        function getTodayString() {
-            const today = new Date();
-            // Notatie: DD-MM-JJJJ
-            return today.toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        }
-
-        // --- UI & State functies ---
         function loadKeys() {
-            document.getElementById('geminiKey').value = localStorage.getItem('mijnGeminiSleutel') || '';
-            document.getElementById('claudeKey').value = localStorage.getItem('mijnClaudeSleutel') || '';
+            document.getElementById('geminiKey').value = localStorage.getItem('webbreGemini') || '';
+            document.getElementById('claudeKey').value = localStorage.getItem('webbreClaude') || '';
         }
 
         function toggleSettings() {
             const modal = document.getElementById('settings-modal');
-            const overlay = document.getElementById('modal-overlay');
-            
-            // Als we sluiten, sla de keys op
-            if(modal.style.display === 'block') {
-                const gKey = document.getElementById('geminiKey').value;
-                const cKey = document.getElementById('claudeKey').value;
-                localStorage.setItem('mijnGeminiSleutel', gKey);
-                localStorage.setItem('mijnClaudeSleutel', cKey);
-                modal.style.display = 'none';
-                overlay.style.display = 'none';
-            } else {
-                modal.style.display = 'block';
-                overlay.style.display = 'block';
-            }
+            const gKey = document.getElementById('geminiKey').value;
+            const cKey = document.getElementById('claudeKey').value;
+            localStorage.setItem('webbreGemini', gKey);
+            localStorage.setItem('webbreClaude', cKey);
+            modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
         }
 
         function renderHistory() {
@@ -337,36 +236,24 @@
             list.innerHTML = '';
             
             // Groepeer chats op datum
-            const groupedChats = {};
-            
-            // Sorteer chats eerst van nieuw naar oud
-            const sortedChats = chats.slice().sort((a, b) => b.id - a.id);
-
-            sortedChats.forEach(chat => {
-                const dateKey = chat.date || "Onbekende datum";
-                if (!groupedChats[dateKey]) {
-                    groupedChats[dateKey] = [];
-                }
-                groupedChats[dateKey].push(chat);
+            const grouped = {};
+            chats.slice().reverse().forEach(chat => {
+                const dateKey = chat.date || 'Onbekende datum';
+                if (!grouped[dateKey]) grouped[dateKey] = [];
+                grouped[dateKey].push(chat);
             });
 
-            // Render groepen
-            for (const [date, chatsInDate] of Object.entries(groupedChats)) {
-                // Maak datum header
+            // Teken de geschiedenis in de zijbalk
+            for (const [date, chatArray] of Object.entries(grouped)) {
                 const header = document.createElement('div');
-                header.className = 'date-group-header';
-                
-                // Als de datum gelijk is aan vandaag, toon 'Vandaag', anders de datum
-                const isToday = date === getTodayString();
-                header.innerText = isToday ? 'Vandaag' : date;
+                header.className = 'date-header';
+                header.innerText = date;
                 list.appendChild(header);
 
-                // Render items voor die datum
-                chatsInDate.forEach(chat => {
+                chatArray.forEach(chat => {
                     const item = document.createElement('div');
                     item.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
                     item.innerText = chat.title;
-                    item.title = chat.title; // Toon volledige titel bij hover
                     item.onclick = () => loadChat(chat.id);
                     list.appendChild(item);
                 });
@@ -375,95 +262,82 @@
 
         function startNewChat() {
             currentChatId = null;
-            document.getElementById('chat-window').innerHTML = '<div class="message ai-message">Welkom bij Webbre OptimumAI LLM! Typ hieronder een vraag om de workflow te starten.</div>';
+            document.getElementById('chat-window').innerHTML = '<div class="message ai-message">Nieuw gesprek gestart in Webbre OptimumAI.</div>';
             document.getElementById('userPrompt').value = '';
-            document.getElementById('current-chat-title').innerText = 'Nieuw gesprek';
             renderHistory();
         }
 
         function loadChat(id) {
             currentChatId = id;
             const chat = chats.find(c => c.id === id);
-            
-            document.getElementById('current-chat-title').innerText = chat.title;
             const window = document.getElementById('chat-window');
             window.innerHTML = '';
-            
             chat.messages.forEach(msg => appendMessage(msg.role, msg.content));
             renderHistory();
         }
 
         function appendMessage(role, content) {
             const window = document.getElementById('chat-window');
-            // Haal welkomstbericht weg als er een echt bericht komt
-            const welcomeMsg = document.getElementById('welcome-msg');
-            if (welcomeMsg) welcomeMsg.remove();
-
             const div = document.createElement('div');
-            div.className = `message ${role === 'user' ? 'user-message' : 'ai-message'}`;
-            // Simpele opmaak voor enters
-            div.innerHTML = content.replace(/\n/g, '<br>'); 
+            // Check of het een foutmelding is
+            if (role === 'error') {
+                div.className = 'message error-message';
+            } else {
+                div.className = `message ${role === 'user' ? 'user-message' : 'ai-message'}`;
+            }
+            div.innerText = content;
             window.appendChild(div);
             window.scrollTop = window.scrollHeight;
         }
 
-        // --- Core Workflow Logic ---
         async function startWorkflow() {
-            const promptInput = document.getElementById('userPrompt');
-            const prompt = promptInput.value.trim();
-            const geminiKey = localStorage.getItem('mijnGeminiSleutel');
-            const claudeKey = localStorage.getItem('mijnClaudeSleutel');
+            const prompt = document.getElementById('userPrompt').value;
+            const geminiKey = localStorage.getItem('webbreGemini');
+            const claudeKey = localStorage.getItem('webbreClaude');
             const status = document.getElementById('status');
 
-            if (!prompt) return;
-
-            if (!geminiKey || !claudeKey) {
-                alert("Zorg dat beide API keys zijn ingevuld via 'Instellingen'.");
-                toggleSettings();
+            if (!prompt || !geminiKey || !claudeKey) {
+                alert("Zorg dat je een vraag hebt getypt én beide API keys in de instellingen staan.");
                 return;
             }
 
-            // Maak nieuwe chat aan als we in een schoon scherm beginnen
+            // Chat opslaan inclusief huidige datum
             if (!currentChatId) {
-                currentChatId = Date.now(); // Gebruiken we als uniek ID en timestamp
-                const cleanTitle = prompt.length > 25 ? prompt.substring(0, 25) + '...' : prompt;
-                
+                currentChatId = Date.now();
+                const vandaag = new Date().toLocaleDateString('nl-NL'); // Geeft bijv. 13-05-2026
                 chats.push({ 
                     id: currentChatId, 
-                    title: cleanTitle, 
-                    date: getTodayString(), // Voeg de datum toe aan de opslag
+                    title: prompt.substring(0, 25) + '...', 
+                    date: vandaag,
                     messages: [] 
                 });
-                document.getElementById('current-chat-title').innerText = cleanTitle;
             }
 
-            // Toon de vraag in het scherm
             appendMessage('user', prompt);
-            promptInput.value = '';
-            
-            // Zet knop tijdelijk uit om dubbel klikken te voorkomen
-            const sendBtn = document.querySelector('.send-btn');
-            sendBtn.disabled = true;
-            sendBtn.style.opacity = '0.5';
+            document.getElementById('userPrompt').value = '';
 
             try {
-                // Stap 1: Gemini eerste aanzet
-                status.innerText = "Stap 1: Gemini analyseert...";
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${geminiKey}`;
+                // STAP 1: Gebruik gemini-1.5-flash in plaats van pro
+                status.innerText = "Stap 1: Gemini (Flash) denkt na...";
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
                 
-                // We sturen alleen de huidige prompt, context meesturen kan later toegevoegd worden
                 const res1 = await fetch(geminiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
                 
-                if (!res1.ok) throw new Error("Fout bij aanroepen Gemini (Stap 1)");
+                // Extra fout-vanger: als Google weigert, vang de tekst op
+                if (!res1.ok) {
+                    const errData = await res1.json();
+                    throw new Error(`Google API zegt: ${errData.error.message}`);
+                }
+
                 const data1 = await res1.json();
                 const draft = data1.candidates[0].content.parts[0].text;
 
-                // Stap 2: Claude feedback
-                status.innerText = "Stap 2: Claude controleert (OptimumAI)...";
+                // STAP 2: Claude feedback
+                status.innerText = "Stap 2: Claude controleert...";
                 const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
                     method: "POST",
                     headers: {
@@ -475,49 +349,44 @@
                     body: JSON.stringify({
                         model: "claude-3-haiku-20240307",
                         max_tokens: 1024,
-                        messages: [{ role: "user", content: `Je bent een kritische reviewer genaamd Webbre OptimumAI. Lees deze vraag: "${prompt}". \n\nDit was het eerste antwoord: ${draft} \n\nGeef beknopt advies hoe dit antwoord beter, accurater of duidelijker kan.` }]
+                        messages: [{ role: "user", content: `Review dit antwoord op de vraag: "${prompt}". Antwoord: ${draft}` }]
                     })
                 });
-                
-                if (!claudeRes.ok) throw new Error("Fout bij aanroepen Claude");
+
+                if (!claudeRes.ok) {
+                    const errClaude = await claudeRes.json();
+                    throw new Error(`Claude API zegt: ${errClaude.error.message}`);
+                }
+
                 const data2 = await claudeRes.json();
                 const feedback = data2.content[0].text;
 
-                // Stap 3: Gemini finale versie
-                status.innerText = "Stap 3: Definitieve versie genereren...";
+                // STAP 3: Gemini finale versie
+                status.innerText = "Stap 3: Gemini optimaliseert eindresultaat...";
                 const res3 = await fetch(geminiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: `Herschrijf en verbeter het volgende antwoord. Je MOET de volgende feedback verwerken: ${feedback}. \n\nOriginele vraag: ${prompt}. \n\nOorspronkelijk antwoord: ${draft}` }] }] })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: `Verbeter dit antwoord met deze feedback: ${feedback}. Vraag: ${prompt}. Eerste antwoord: ${draft}` }] }] })
                 });
                 
-                if (!res3.ok) throw new Error("Fout bij aanroepen Gemini (Stap 3)");
                 const data3 = await res3.json();
                 const final = data3.candidates[0].content.parts[0].text;
 
                 // Opslaan en tonen
-                status.innerText = "Klaar!";
-                setTimeout(() => { status.innerText = ""; }, 3000); // Verberg status na 3 seconden
-                
+                status.innerText = "";
                 appendMessage('ai', final);
                 
-                // Update geschiedenis in localStorage
                 const chatIndex = chats.findIndex(c => c.id === currentChatId);
-                if(chatIndex !== -1) {
-                    chats[chatIndex].messages.push({ role: 'user', content: prompt });
-                    chats[chatIndex].messages.push({ role: 'ai', content: final });
-                    // We slaan chats op onder de naam 'webbre_ai_chats' zodat het niet conflicteert met oude versies
-                    localStorage.setItem('webbre_ai_chats', JSON.stringify(chats));
-                }
-                
+                chats[chatIndex].messages.push({ role: 'user', content: prompt });
+                chats[chatIndex].messages.push({ role: 'ai', content: final });
+                localStorage.setItem('webbre_chats', JSON.stringify(chats));
                 renderHistory();
 
             } catch (e) {
                 console.error(e);
-                status.innerText = "Fout: " + e.message + ". Controleer je API keys in Instellingen.";
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.style.opacity = '1';
+                status.innerText = "";
+                // Toon de foutmelding netjes in de chat interface
+                appendMessage('error', `Fout: ${e.message}`);
             }
         }
     </script>
