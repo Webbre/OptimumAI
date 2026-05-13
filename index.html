@@ -223,10 +223,10 @@
         <input type="password" id="geminiKey" style="width:100%; margin-bottom:10px; padding:8px; box-sizing:border-box;">
         
         <label style="font-size: 12px; font-weight: bold;">Claude API Key:</label>
-        <input type="password" id="claudeKey" style="width:100%; margin-bottom:10px; padding:8px; box-sizing:border-box;">
+        <input type="password" id="claudeKey" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
 
         <label style="font-size: 12px; font-weight: bold;">Claude Model:</label>
-        <input type="text" id="claudeModel" placeholder="Bijv. claude-3-5-sonnet-20241022" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
+        <input type="text" id="claudeModel" placeholder="Bijv. claude-haiku-4-5-20251001" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
         
         <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">Sluiten en opslaan</button>
     </div>
@@ -246,10 +246,10 @@
             document.getElementById('geminiKey').value = localStorage.getItem('webbreGemini') || '';
             document.getElementById('claudeKey').value = localStorage.getItem('webbreClaude') || '';
             
-            // Controleer of het oude, foutieve model nog in het geheugen staat
+            // Controleer op oude Claude 3 modellen en vervang deze door de nieuwe Claude 4.5 Haiku
             let opgeslagenClaudeModel = localStorage.getItem('webbreClaudeModel');
-            if (!opgeslagenClaudeModel || opgeslagenClaudeModel === 'claude-3-haiku-20240307') {
-                opgeslagenClaudeModel = 'claude-3-5-sonnet-20241022'; // Overschrijf met het nieuwe model
+            if (!opgeslagenClaudeModel || opgeslagenClaudeModel.includes('claude-3')) {
+                opgeslagenClaudeModel = 'claude-haiku-4-5-20251001'; 
                 localStorage.setItem('webbreClaudeModel', opgeslagenClaudeModel);
             }
             
@@ -336,7 +336,7 @@
             const prompt = document.getElementById('userPrompt').value.trim();
             const geminiKey = (localStorage.getItem('webbreGemini') || '').trim();
             const claudeKey = (localStorage.getItem('webbreClaude') || '').trim();
-            const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-3-5-sonnet-20241022').trim();
+            const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-haiku-4-5-20251001').trim();
             const status = document.getElementById('status');
 
             if (!prompt || !geminiKey || !claudeKey) {
