@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ewout's Optimum AI</title>
-    <!-- Voorkomt de favicon.ico 404 fout in je console -->
     <link rel="icon" href="data:,">
     <style>
-        /* Basisstijl en layout - Zachte, warme achtergrond */
+        /* Basisstijl en layout */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -16,18 +15,18 @@
             background-color: #faf9f6;
         }
 
-        /* Zijbalk met subtiele styling */
+        /* Zijbalk in lichte tint met gele accentrand */
         #sidebar {
             width: 260px;
             background-color: #fdfcfb;
             border-right: 1px solid #e8e6e1;
+            border-top: 5px solid #f0b516; /* AS Roma Geel */
             display: flex;
             flex-direction: column;
             padding: 15px;
             overflow-y: auto;
         }
 
-        /* AS Roma Rood voor de knop */
         .new-chat-btn {
             background: #8e1f2f;
             color: white;
@@ -43,7 +42,6 @@
             background: #7a1a28;
         }
 
-        /* AS Roma Rood voor de datumkopjes */
         .date-header {
             font-size: 12px;
             color: #8e1f2f;
@@ -70,10 +68,9 @@
             background-color: #f4f0e6;
         }
 
-        /* AS Roma Geel voor het actieve gesprek */
         .history-item.active {
-            background-color: #f0b516;
-            color: #8e1f2f;
+            background-color: #8e1f2f;
+            color: white;
             font-weight: bold;
         }
 
@@ -83,6 +80,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            border-top: 5px solid #f0b516; /* AS Roma Geel */
         }
 
         #chat-window {
@@ -102,14 +100,15 @@
             font-size: 15px;
         }
 
-        /* Lichtgrijze/warme tint voor de gebruiker */
+        /* Gebruiker prompts in AS Roma Geel */
         .user-message {
             align-self: flex-end;
-            background-color: #f0eedf;
-            color: #1f1f1f;
+            background-color: #f0b516; 
+            color: #8e1f2f; 
+            font-weight: 500;
         }
 
-        /* Witte bubbel met subtiele rode rand voor AI */
+        /* AI berichten neutraal wit met rode rand */
         .ai-message {
             align-self: flex-start;
             background-color: white;
@@ -164,7 +163,6 @@
             font-weight: bold;
         }
 
-        /* AS Roma Rood voor de verzendknop */
         button.send-btn {
             background-color: #8e1f2f;
             color: white;
@@ -192,6 +190,7 @@
             z-index: 1000;
             border-radius: 12px;
             border: 2px solid #8e1f2f;
+            width: 300px;
         }
     </style>
 </head>
@@ -212,7 +211,7 @@
                 <div id="status" style="font-size: 12px; color: #8e1f2f; font-weight: bold;"></div>
                 <textarea id="userPrompt" rows="3" placeholder="Stel een vraag..."></textarea>
                 <div class="controls">
-                    <span class="api-keys-link" onclick="toggleSettings()">Instellingen (API)</span>
+                    <span class="api-keys-link" onclick="toggleSettings()">Instellingen (API Keys)</span>
                     <button class="send-btn" onclick="startWorkflow()">Verstuur</button>
                 </div>
             </div>
@@ -220,13 +219,21 @@
     </div>
 
     <div id="settings-modal">
-        <h3 style="color: #8e1f2f;">API Sleutels Opslaan</h3>
-        <input type="password" id="geminiKey" placeholder="Gemini API Key" style="width:100%; margin-bottom:10px; padding:8px;">
-        <input type="password" id="claudeKey" placeholder="Claude API Key" style="width:100%; margin-bottom:10px; padding:8px;">
-        <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">Sluiten en opslaan</button>
+        <h3 style="color: #8e1f2f;">Instellingen</h3>
+        
+        <label style="font-size: 12px; font-weight: bold;">Gemini API Key:</label>
+        <input type="password" id="geminiKey" style="width:100%; margin-bottom:10px; padding:8px; box-sizing:border-box;">
+        
+        <label style="font-size: 12px; font-weight: bold;">Claude API Key:</label>
+        <input type="password" id="claudeKey" style="width:100%; margin-bottom:10px; padding:8px; box-sizing:border-box;">
+        
+        <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">Sluiten en opslaan</button>
     </div>
 
     <script>
+        // De correcte modelnaam uit jouw console-test
+        const vastGeminiModel = 'gemini-2.5-pro'; 
+
         let chats = JSON.parse(localStorage.getItem('webbre_chats') || '[]');
         let currentChatId = null;
 
@@ -242,18 +249,24 @@
 
         function toggleSettings() {
             const modal = document.getElementById('settings-modal');
-            const gKey = document.getElementById('geminiKey').value;
-            const cKey = document.getElementById('claudeKey').value;
-            localStorage.setItem('webbreGemini', gKey);
-            localStorage.setItem('webbreClaude', cKey);
-            modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+            
+            if (modal.style.display === 'block') {
+                const gKey = document.getElementById('geminiKey').value;
+                const cKey = document.getElementById('claudeKey').value;
+                
+                localStorage.setItem('webbreGemini', gKey);
+                localStorage.setItem('webbreClaude', cKey);
+                
+                modal.style.display = 'none';
+            } else {
+                modal.style.display = 'block';
+            }
         }
 
         function renderHistory() {
             const list = document.getElementById('history-list');
             list.innerHTML = '';
             
-            // Groepeer chats op datum
             const grouped = {};
             chats.slice().reverse().forEach(chat => {
                 const dateKey = chat.date || 'Onbekende datum';
@@ -261,7 +274,6 @@
                 grouped[dateKey].push(chat);
             });
 
-            // Teken de geschiedenis in de zijbalk
             for (const [date, chatArray] of Object.entries(grouped)) {
                 const header = document.createElement('div');
                 header.className = 'date-header';
@@ -316,11 +328,10 @@
             const status = document.getElementById('status');
 
             if (!prompt || !geminiKey || !claudeKey) {
-                alert("Zorg dat je een vraag hebt getypt én beide API keys in de instellingen staan.");
+                alert("Zorg dat je een vraag hebt getypt én de API keys hebt ingesteld.");
                 return;
             }
 
-            // Chat opslaan inclusief huidige datum
             if (!currentChatId) {
                 currentChatId = Date.now();
                 const vandaag = new Date().toLocaleDateString('nl-NL');
@@ -336,9 +347,9 @@
             document.getElementById('userPrompt').value = '';
 
             try {
-                // STAP 1: Gebruik gemini-1.5-flash-latest voor stabiliteit
-                status.innerText = "Stap 1: Gemini denkt na...";
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiKey}`;
+                // STAP 1: Gebruik het model 2.5-pro
+                status.innerText = `Stap 1: ${vastGeminiModel} denkt na...`;
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${vastGeminiModel}:generateContent?key=${geminiKey}`;
                 
                 const res1 = await fetch(geminiUrl, {
                     method: "POST",
@@ -348,7 +359,7 @@
                 
                 if (!res1.ok) {
                     const errData = await res1.json();
-                    throw new Error(`Google API zegt: ${errData.error.message}`);
+                    throw new Error(`Google API fout op model ${vastGeminiModel}: ${errData.error.message}`);
                 }
 
                 const data1 = await res1.json();
@@ -373,7 +384,7 @@
 
                 if (!claudeRes.ok) {
                     const errClaude = await claudeRes.json();
-                    throw new Error(`Claude API zegt: ${errClaude.error.message}`);
+                    throw new Error(`Claude API fout: ${errClaude.error.message}`);
                 }
 
                 const data2 = await claudeRes.json();
@@ -390,7 +401,6 @@
                 const data3 = await res3.json();
                 const final = data3.candidates[0].content.parts[0].text;
 
-                // Opslaan en tonen
                 status.innerText = "";
                 appendMessage('ai', final);
                 
