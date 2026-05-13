@@ -20,7 +20,7 @@
             width: 260px;
             background-color: #fdfcfb;
             border-right: 1px solid #e8e6e1;
-            border-top: 5px solid #f0b516; /* AS Roma Geel */
+            border-top: 5px solid #f0b516;
             display: flex;
             flex-direction: column;
             padding: 15px;
@@ -80,7 +80,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            border-top: 5px solid #f0b516; /* AS Roma Geel */
+            border-top: 5px solid #f0b516;
         }
 
         #chat-window {
@@ -100,7 +100,6 @@
             font-size: 15px;
         }
 
-        /* Gebruiker prompts in AS Roma Geel */
         .user-message {
             align-self: flex-end;
             background-color: #f0b516; 
@@ -108,7 +107,6 @@
             font-weight: 500;
         }
 
-        /* AI berichten neutraal wit met rode rand */
         .ai-message {
             align-self: flex-start;
             background-color: white;
@@ -190,7 +188,7 @@
             z-index: 1000;
             border-radius: 12px;
             border: 2px solid #8e1f2f;
-            width: 300px;
+            width: 320px;
         }
     </style>
 </head>
@@ -211,7 +209,7 @@
                 <div id="status" style="font-size: 12px; color: #8e1f2f; font-weight: bold;"></div>
                 <textarea id="userPrompt" rows="3" placeholder="Stel een vraag..."></textarea>
                 <div class="controls">
-                    <span class="api-keys-link" onclick="toggleSettings()">Instellingen (API Keys)</span>
+                    <span class="api-keys-link" onclick="toggleSettings()">Instellingen (API & Modellen)</span>
                     <button class="send-btn" onclick="startWorkflow()">Verstuur</button>
                 </div>
             </div>
@@ -226,6 +224,9 @@
         
         <label style="font-size: 12px; font-weight: bold;">Claude API Key:</label>
         <input type="password" id="claudeKey" style="width:100%; margin-bottom:10px; padding:8px; box-sizing:border-box;">
+
+        <label style="font-size: 12px; font-weight: bold;">Claude Model:</label>
+        <input type="text" id="claudeModel" placeholder="Bijv. claude-3-5-sonnet-20241022" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
         
         <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">Sluiten en opslaan</button>
     </div>
@@ -244,6 +245,7 @@
         function loadKeys() {
             document.getElementById('geminiKey').value = localStorage.getItem('webbreGemini') || '';
             document.getElementById('claudeKey').value = localStorage.getItem('webbreClaude') || '';
+            document.getElementById('claudeModel').value = localStorage.getItem('webbreClaudeModel') || 'claude-3-5-sonnet-20241022';
         }
 
         function toggleSettings() {
@@ -252,9 +254,11 @@
             if (modal.style.display === 'block') {
                 const gKey = document.getElementById('geminiKey').value;
                 const cKey = document.getElementById('claudeKey').value;
+                const cModel = document.getElementById('claudeModel').value;
                 
                 localStorage.setItem('webbreGemini', gKey);
                 localStorage.setItem('webbreClaude', cKey);
+                localStorage.setItem('webbreClaudeModel', cModel);
                 
                 modal.style.display = 'none';
             } else {
@@ -324,6 +328,7 @@
             const prompt = document.getElementById('userPrompt').value;
             const geminiKey = localStorage.getItem('webbreGemini');
             const claudeKey = localStorage.getItem('webbreClaude');
+            const claudeModel = localStorage.getItem('webbreClaudeModel') || 'claude-3-5-sonnet-20241022';
             const status = document.getElementById('status');
 
             if (!prompt || !geminiKey || !claudeKey) {
@@ -364,8 +369,8 @@
                 const data1 = await res1.json();
                 const draft = data1.candidates[0].content.parts[0].text;
 
-                // STAP 2: Claude feedback (directe link met de juiste header)
-                status.innerText = "Stap 2: Claude controleert...";
+                // STAP 2: Claude feedback
+                status.innerText = `Stap 2: ${claudeModel} controleert...`;
                 const claudeUrl = "https://api.anthropic.com/v1/messages";
                 
                 const claudeRes = await fetch(claudeUrl, {
@@ -374,10 +379,10 @@
                         "x-api-key": claudeKey,
                         "anthropic-version": "2023-06-01",
                         "content-type": "application/json",
-                        "anthropic-dangerous-direct-browser-access": "true" // Aangepaste veiligheidsregel
+                        "anthropic-dangerous-direct-browser-access": "true"
                     },
                     body: JSON.stringify({
-                        model: "claude-3-haiku-20240307",
+                        model: claudeModel,
                         max_tokens: 1024,
                         messages: [{ role: "user", content: `Review dit antwoord op de vraag: "${prompt}". Antwoord: ${draft}` }]
                     })
