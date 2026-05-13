@@ -7,30 +7,29 @@
     <!-- Voorkomt de favicon.ico 404 fout in je console -->
     <link rel="icon" href="data:,">
     <style>
-        /* Basisstijl en layout met warme achtergrond */
+        /* Basisstijl en layout - Lichte versie */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             display: flex;
             height: 100vh;
-            background-color: #faf9f6; 
+            background-color: #f9f9f9;
         }
 
-        /* Zijbalk in AS Roma Karmijnrood */
+        /* Zijbalk voor geschiedenis */
         #sidebar {
             width: 260px;
-            background-color: #8e1f2f;
-            color: white;
+            background-color: #f0f4f9;
+            border-right: 1px solid #ddd;
             display: flex;
             flex-direction: column;
             padding: 15px;
             overflow-y: auto;
         }
 
-        /* Nieuwe chat knop in AS Roma Goudgeel */
         .new-chat-btn {
-            background: #f0b516;
-            color: #8e1f2f;
+            background: #dde3ea;
+            color: #1f1f1f;
             border: none;
             padding: 12px;
             border-radius: 20px;
@@ -41,11 +40,12 @@
 
         .date-header {
             font-size: 12px;
-            color: #f0b516;
+            color: #5f6368;
             margin-top: 15px;
             margin-bottom: 5px;
             font-weight: bold;
             text-transform: uppercase;
+            padding-left: 5px;
         }
 
         .history-item {
@@ -57,19 +57,19 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: #fff;
+            color: #333;
         }
 
         .history-item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: #e2e7ed;
         }
 
         .history-item.active {
-            background-color: #f0b516;
-            color: #8e1f2f;
-            font-weight: bold;
+            background-color: #d3e3fd;
+            color: #1f1f1f;
         }
 
+        /* Hoofdscherm chat */
         #main-content {
             flex: 1;
             display: flex;
@@ -102,7 +102,7 @@
 
         .ai-message {
             align-self: flex-start;
-            background-color: white;
+            background-color: transparent;
             color: #1f1f1f;
             border: 1px solid #e3e3e3;
         }
@@ -114,6 +114,7 @@
             border: 1px solid #cc0000;
         }
 
+        /* Input area onderaan */
         #input-container {
             padding: 20px;
             background: white;
@@ -145,23 +146,22 @@
         }
 
         .api-keys-link {
-            font-size: 13px;
-            color: #8e1f2f;
-            text-decoration: underline;
+            font-size: 12px;
+            color: #0b57d0;
+            text-decoration: none;
             cursor: pointer;
-            font-weight: bold;
         }
 
         button.send-btn {
-            background-color: #8e1f2f;
+            background-color: #0b57d0;
             color: white;
             border: none;
             padding: 10px 24px;
             border-radius: 20px;
             cursor: pointer;
-            font-weight: bold;
         }
 
+        /* Instellingen scherm */
         #settings-modal {
             display: none;
             position: fixed;
@@ -173,7 +173,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 1000;
             border-radius: 12px;
-            border: 2px solid #8e1f2f;
         }
     </style>
 </head>
@@ -191,10 +190,10 @@
 
         <div id="input-container">
             <div class="input-wrapper">
-                <div id="status" style="font-size: 12px; color: #8e1f2f; font-weight: bold;"></div>
-                <textarea id="userPrompt" rows="3" placeholder="Typ hier je prompt..."></textarea>
+                <div id="status" style="font-size: 12px; color: #666;"></div>
+                <textarea id="userPrompt" rows="3" placeholder="Stel een vraag..."></textarea>
                 <div class="controls">
-                    <span class="api-keys-link" onclick="toggleSettings()">Instellingen (API)</span>
+                    <span class="api-keys-link" onclick="toggleSettings()">API Instellingen</span>
                     <button class="send-btn" onclick="startWorkflow()">Verstuur</button>
                 </div>
             </div>
@@ -202,10 +201,10 @@
     </div>
 
     <div id="settings-modal">
-        <h3 style="color: #8e1f2f;">API Sleutels Opslaan</h3>
-        <input type="password" id="geminiKey" placeholder="Plak Gemini Key" style="width:100%; margin-bottom:10px; padding:8px;">
-        <input type="password" id="claudeKey" placeholder="Plak Claude Key" style="width:100%; margin-bottom:10px; padding:8px;">
-        <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">Opslaan</button>
+        <h3>API instellingen</h3>
+        <input type="password" id="geminiKey" placeholder="Gemini API Key" style="width:100%; margin-bottom:10px; padding:8px;">
+        <input type="password" id="claudeKey" placeholder="Claude API Key" style="width:100%; margin-bottom:10px; padding:8px;">
+        <button onclick="toggleSettings()">Sluiten en opslaan</button>
     </div>
 
     <script>
@@ -279,12 +278,13 @@
         function appendMessage(role, content) {
             const window = document.getElementById('chat-window');
             const div = document.createElement('div');
-            // Check of het een foutmelding is
+            
             if (role === 'error') {
                 div.className = 'message error-message';
             } else {
                 div.className = `message ${role === 'user' ? 'user-message' : 'ai-message'}`;
             }
+            
             div.innerText = content;
             window.appendChild(div);
             window.scrollTop = window.scrollHeight;
@@ -304,7 +304,7 @@
             // Chat opslaan inclusief huidige datum
             if (!currentChatId) {
                 currentChatId = Date.now();
-                const vandaag = new Date().toLocaleDateString('nl-NL'); // Geeft bijv. 13-05-2026
+                const vandaag = new Date().toLocaleDateString('nl-NL');
                 chats.push({ 
                     id: currentChatId, 
                     title: prompt.substring(0, 25) + '...', 
@@ -317,8 +317,8 @@
             document.getElementById('userPrompt').value = '';
 
             try {
-                // STAP 1: Gebruik gemini-1.5-flash in plaats van pro
-                status.innerText = "Stap 1: Gemini (Flash) denkt na...";
+                // STAP 1: Gebruik gemini-1.5-flash
+                status.innerText = "Stap 1: Gemini denkt na...";
                 const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
                 
                 const res1 = await fetch(geminiUrl, {
@@ -327,7 +327,6 @@
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
                 
-                // Extra fout-vanger: als Google weigert, vang de tekst op
                 if (!res1.ok) {
                     const errData = await res1.json();
                     throw new Error(`Google API zegt: ${errData.error.message}`);
@@ -385,7 +384,6 @@
             } catch (e) {
                 console.error(e);
                 status.innerText = "";
-                // Toon de foutmelding netjes in de chat interface
                 appendMessage('error', `Fout: ${e.message}`);
             }
         }
