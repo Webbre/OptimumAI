@@ -7,29 +7,30 @@
     <!-- Voorkomt de favicon.ico 404 fout in je console -->
     <link rel="icon" href="data:,">
     <style>
-        /* Basisstijl en layout - Lichte versie */
+        /* Basisstijl en layout - Zachte, warme achtergrond */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             display: flex;
             height: 100vh;
-            background-color: #f9f9f9;
+            background-color: #faf9f6;
         }
 
-        /* Zijbalk voor geschiedenis */
+        /* Zijbalk met subtiele styling */
         #sidebar {
             width: 260px;
-            background-color: #f0f4f9;
-            border-right: 1px solid #ddd;
+            background-color: #fdfcfb;
+            border-right: 1px solid #e8e6e1;
             display: flex;
             flex-direction: column;
             padding: 15px;
             overflow-y: auto;
         }
 
+        /* AS Roma Rood voor de knop */
         .new-chat-btn {
-            background: #dde3ea;
-            color: #1f1f1f;
+            background: #8e1f2f;
+            color: white;
             border: none;
             padding: 12px;
             border-radius: 20px;
@@ -38,9 +39,14 @@
             margin-bottom: 20px;
         }
 
+        .new-chat-btn:hover {
+            background: #7a1a28;
+        }
+
+        /* AS Roma Rood voor de datumkopjes */
         .date-header {
             font-size: 12px;
-            color: #5f6368;
+            color: #8e1f2f;
             margin-top: 15px;
             margin-bottom: 5px;
             font-weight: bold;
@@ -61,12 +67,14 @@
         }
 
         .history-item:hover {
-            background-color: #e2e7ed;
+            background-color: #f4f0e6;
         }
 
+        /* AS Roma Geel voor het actieve gesprek */
         .history-item.active {
-            background-color: #d3e3fd;
-            color: #1f1f1f;
+            background-color: #f0b516;
+            color: #8e1f2f;
+            font-weight: bold;
         }
 
         /* Hoofdscherm chat */
@@ -94,17 +102,20 @@
             font-size: 15px;
         }
 
+        /* Lichtgrijze/warme tint voor de gebruiker */
         .user-message {
             align-self: flex-end;
-            background-color: #e9e9f0;
+            background-color: #f0eedf;
             color: #1f1f1f;
         }
 
+        /* Witte bubbel met subtiele rode rand voor AI */
         .ai-message {
             align-self: flex-start;
-            background-color: transparent;
+            background-color: white;
             color: #1f1f1f;
-            border: 1px solid #e3e3e3;
+            border: 1px solid #e8e6e1;
+            border-left: 4px solid #8e1f2f;
         }
 
         .error-message {
@@ -118,7 +129,7 @@
         #input-container {
             padding: 20px;
             background: white;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid #e8e6e1;
         }
 
         .input-wrapper {
@@ -147,18 +158,25 @@
 
         .api-keys-link {
             font-size: 12px;
-            color: #0b57d0;
-            text-decoration: none;
+            color: #8e1f2f;
+            text-decoration: underline;
             cursor: pointer;
+            font-weight: bold;
         }
 
+        /* AS Roma Rood voor de verzendknop */
         button.send-btn {
-            background-color: #0b57d0;
+            background-color: #8e1f2f;
             color: white;
             border: none;
             padding: 10px 24px;
             border-radius: 20px;
             cursor: pointer;
+            font-weight: bold;
+        }
+
+        button.send-btn:hover {
+            background-color: #7a1a28;
         }
 
         /* Instellingen scherm */
@@ -173,6 +191,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 1000;
             border-radius: 12px;
+            border: 2px solid #8e1f2f;
         }
     </style>
 </head>
@@ -190,10 +209,10 @@
 
         <div id="input-container">
             <div class="input-wrapper">
-                <div id="status" style="font-size: 12px; color: #666;"></div>
+                <div id="status" style="font-size: 12px; color: #8e1f2f; font-weight: bold;"></div>
                 <textarea id="userPrompt" rows="3" placeholder="Stel een vraag..."></textarea>
                 <div class="controls">
-                    <span class="api-keys-link" onclick="toggleSettings()">API Instellingen</span>
+                    <span class="api-keys-link" onclick="toggleSettings()">Instellingen (API)</span>
                     <button class="send-btn" onclick="startWorkflow()">Verstuur</button>
                 </div>
             </div>
@@ -201,10 +220,10 @@
     </div>
 
     <div id="settings-modal">
-        <h3>API instellingen</h3>
+        <h3 style="color: #8e1f2f;">API Sleutels Opslaan</h3>
         <input type="password" id="geminiKey" placeholder="Gemini API Key" style="width:100%; margin-bottom:10px; padding:8px;">
         <input type="password" id="claudeKey" placeholder="Claude API Key" style="width:100%; margin-bottom:10px; padding:8px;">
-        <button onclick="toggleSettings()">Sluiten en opslaan</button>
+        <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">Sluiten en opslaan</button>
     </div>
 
     <script>
@@ -317,9 +336,9 @@
             document.getElementById('userPrompt').value = '';
 
             try {
-                // STAP 1: Gebruik gemini-1.5-flash
+                // STAP 1: Gebruik gemini-1.5-flash-latest voor stabiliteit
                 status.innerText = "Stap 1: Gemini denkt na...";
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiKey}`;
                 
                 const res1 = await fetch(geminiUrl, {
                     method: "POST",
