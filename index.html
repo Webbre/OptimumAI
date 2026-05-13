@@ -226,7 +226,7 @@
         <input type="password" id="claudeKey" style="width:100%; margin-bottom:10px; padding:8px; box-sizing:border-box;">
 
         <label style="font-size: 12px; font-weight: bold;">Claude Model:</label>
-        <input type="text" id="claudeModel" placeholder="Bijv. claude-3-haiku-20240307" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
+        <input type="text" id="claudeModel" placeholder="Bijv. claude-3-5-sonnet-20241022" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
         
         <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">Sluiten en opslaan</button>
     </div>
@@ -245,14 +245,21 @@
         function loadKeys() {
             document.getElementById('geminiKey').value = localStorage.getItem('webbreGemini') || '';
             document.getElementById('claudeKey').value = localStorage.getItem('webbreClaude') || '';
-            document.getElementById('claudeModel').value = localStorage.getItem('webbreClaudeModel') || 'claude-3-haiku-20240307';
+            
+            // Controleer of het oude, foutieve model nog in het geheugen staat
+            let opgeslagenClaudeModel = localStorage.getItem('webbreClaudeModel');
+            if (!opgeslagenClaudeModel || opgeslagenClaudeModel === 'claude-3-haiku-20240307') {
+                opgeslagenClaudeModel = 'claude-3-5-sonnet-20241022'; // Overschrijf met het nieuwe model
+                localStorage.setItem('webbreClaudeModel', opgeslagenClaudeModel);
+            }
+            
+            document.getElementById('claudeModel').value = opgeslagenClaudeModel;
         }
 
         function toggleSettings() {
             const modal = document.getElementById('settings-modal');
             
             if (modal.style.display === 'block') {
-                // We gebruiken .trim() om onzichtbare spaties te verwijderen
                 const gKey = document.getElementById('geminiKey').value.trim();
                 const cKey = document.getElementById('claudeKey').value.trim();
                 const cModel = document.getElementById('claudeModel').value.trim();
@@ -327,10 +334,9 @@
 
         async function startWorkflow() {
             const prompt = document.getElementById('userPrompt').value.trim();
-            // We halen de sleutels op en knippen eventuele onzichtbare spaties weg
             const geminiKey = (localStorage.getItem('webbreGemini') || '').trim();
             const claudeKey = (localStorage.getItem('webbreClaude') || '').trim();
-            const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-3-haiku-20240307').trim();
+            const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-3-5-sonnet-20241022').trim();
             const status = document.getElementById('status');
 
             if (!prompt || !geminiKey || !claudeKey) {
