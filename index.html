@@ -231,7 +231,6 @@
     </div>
 
     <script>
-        // De correcte modelnaam aangepast naar flash om quota problemen te voorkomen
         const vastGeminiModel = 'gemini-2.5-flash'; 
 
         let chats = JSON.parse(localStorage.getItem('webbre_chats') || '[]');
@@ -347,7 +346,7 @@
             document.getElementById('userPrompt').value = '';
 
             try {
-                // STAP 1: Gebruik het model 2.5-flash
+                // STAP 1: Gemini eerste aanroep
                 status.innerText = `Stap 1: ${vastGeminiModel} denkt na...`;
                 const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${vastGeminiModel}:generateContent?key=${geminiKey}`;
                 
@@ -359,15 +358,17 @@
                 
                 if (!res1.ok) {
                     const errData = await res1.json();
-                    throw new Error(`Google API fout op model ${vastGeminiModel}: ${errData.error.message}`);
+                    throw new Error(`Google API fout: ${errData.error.message}`);
                 }
 
                 const data1 = await res1.json();
                 const draft = data1.candidates[0].content.parts[0].text;
 
-                // STAP 2: Claude feedback
+                // STAP 2: Claude feedback (nu via een proxy om CORS blokkades te voorkomen)
                 status.innerText = "Stap 2: Claude controleert...";
-                const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+                const claudeProxyUrl = "https://corsproxy.io/?https://api.anthropic.com/v1/messages";
+                
+                const claudeRes = await fetch(claudeProxyUrl, {
                     method: "POST",
                     headers: {
                         "x-api-key": claudeKey,
@@ -384,7 +385,7 @@
 
                 if (!claudeRes.ok) {
                     const errClaude = await claudeRes.json();
-                    throw new Error(`Claude API fout: ${errClaude.error.message}`);
+                    throw new Error(`Claude API fout: ${errClaude.error ? errClaude.error.message : 'Netwerkfout via proxy'}`);
                 }
 
                 const data2 = await claudeRes.json();
