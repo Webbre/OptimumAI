@@ -260,7 +260,7 @@
         <input type="password" id="claudeKey" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
 
         <label style="font-size: 12px; font-weight: bold;">Claude Model:</label>
-        <input type="text" id="claudeModel" placeholder="Bijv. claude-haiku-4-5-20251001" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
+        <input type="text" id="claudeModel" placeholder="Bijv. claude-opus-4-7" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
         
         <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">Sluiten en opslaan</button>
     </div>
@@ -280,9 +280,10 @@
             document.getElementById('geminiKey').value = localStorage.getItem('webbreGemini') || '';
             document.getElementById('claudeKey').value = localStorage.getItem('webbreClaude') || '';
             
+            // Controleer of er een oud Haiku model of Sonnet model staat en vervang met de krachtigste Opus
             let opgeslagenClaudeModel = localStorage.getItem('webbreClaudeModel');
-            if (!opgeslagenClaudeModel || opgeslagenClaudeModel.includes('claude-3')) {
-                opgeslagenClaudeModel = 'claude-haiku-4-5-20251001'; 
+            if (!opgeslagenClaudeModel || opgeslagenClaudeModel.includes('haiku') || opgeslagenClaudeModel.includes('sonnet') || opgeslagenClaudeModel.includes('3-')) {
+                opgeslagenClaudeModel = 'claude-opus-4-7'; 
                 localStorage.setItem('webbreClaudeModel', opgeslagenClaudeModel);
             }
             document.getElementById('claudeModel').value = opgeslagenClaudeModel;
@@ -368,7 +369,7 @@
             const prompt = document.getElementById('userPrompt').value.trim();
             const geminiKey = (localStorage.getItem('webbreGemini') || '').trim();
             const claudeKey = (localStorage.getItem('webbreClaude') || '').trim();
-            const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-haiku-4-5-20251001').trim();
+            const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-opus-4-7').trim();
             const sendBtn = document.getElementById('sendBtn');
             const chatWindow = document.getElementById('chat-window');
 
@@ -388,95 +389,101 @@
                 });
             }
 
-            // Blokkeer de knop tijdens het laden
             sendBtn.disabled = true;
             sendBtn.style.backgroundColor = "#ccc";
             
             appendMessage('user', prompt);
             document.getElementById('userPrompt').value = '';
 
-            // Maak het tijdelijke visuele laadscherm aan
             const loadingNode = document.createElement('div');
             loadingNode.className = 'loading-steps';
             chatWindow.appendChild(loadingNode);
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
             try {
-                // STAP 1: Gemini eerste aanroep
-                loadingNode.innerHTML = `<div class="loading-step"><div class="spinner"></div> Gemini maakt een aanzet...</div>`;
+                // STAP 1: Claude maakt eerste aanzet
+                loadingNode.innerHTML = `<div class="loading-step"><div class="spinner"></div> Claude maakt een aanzet...</div>`;
                 
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${vastGeminiModel}:generateContent?key=${geminiKey}`;
-                const res1 = await fetch(geminiUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                
-                if (!res1.ok) {
-                    const errData = await res1.json();
-                    throw new Error(`Google API fout: ${errData.error.message}`);
-                }
-
-                const data1 = await res1.json();
-                const draft = data1.candidates[0].content.parts[0].text;
-
-                // STAP 2: Claude feedback
-                loadingNode.innerHTML = `
-                    <div class="loading-step">✓ Gemini heeft een aanzet gemaakt</div>
-                    <div class="loading-step"><div class="spinner"></div> Claude controleert...</div>
-                `;
-
                 const claudeUrl = "https://api.anthropic.com/v1/messages";
-                const claudeRes = await fetch(claudeUrl, {
+                const claudeHeaders = {
+                    "x-api-key": claudeKey,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                    "anthropic-dangerous-direct-browser-access": "true"
+                };
+
+                const res1 = await fetch(claudeUrl, {
                     method: "POST",
-                    headers: {
-                        "x-api-key": claudeKey,
-                        "anthropic-version": "2023-06-01",
-                        "content-type": "application/json",
-                        "anthropic-dangerous-direct-browser-access": "true"
-                    },
+                    headers: claudeHeaders,
                     body: JSON.stringify({
                         model: claudeModel,
-                        max_tokens: 1024,
-                        messages: [{ role: "user", content: `Review dit antwoord op de vraag: "${prompt}". Antwoord: ${draft}` }]
+                        max_tokens: 2048,
+                        messages: [{ role: "user", content: prompt }]
                     })
                 });
 
-                if (!claudeRes.ok) {
-                    const errClaude = await claudeRes.json();
+                if (!res1.ok) {
+                    const errClaude = await res1.json();
                     let detailMessage = errClaude.error ? errClaude.error.message : 'Onbekende API fout';
-                    let foutType = errClaude.error ? errClaude.error.type : 'Onbekend';
-                    throw new Error(`Claude API fout (${foutType}): ${detailMessage}`);
+                    throw new Error(`Claude API fout: ${detailMessage}`);
                 }
 
-                const data2 = await claudeRes.json();
-                const feedback = data2.content[0].text;
+                const data1 = await res1.json();
+                const draft = data1.content[0].text;
 
-                // STAP 3: Gemini finale versie (met strikte instructie tegen gebabbel)
+                // STAP 2: Gemini geeft feedback
                 loadingNode.innerHTML = `
-                    <div class="loading-step">✓ Gemini heeft een aanzet gemaakt</div>
-                    <div class="loading-step">✓ Claude heeft gecontroleerd</div>
-                    <div class="loading-step"><div class="spinner"></div> Gemini optimaliseert...</div>
+                    <div class="loading-step">✓ Claude heeft een aanzet gemaakt</div>
+                    <div class="loading-step"><div class="spinner"></div> Gemini controleert...</div>
+                `;
+
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${vastGeminiModel}:generateContent?key=${geminiKey}`;
+                const res2 = await fetch(geminiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: `Review dit antwoord op de vraag: "${prompt}". Antwoord: ${draft}` }] }] })
+                });
+                
+                if (!res2.ok) {
+                    const errData = await res2.json();
+                    throw new Error(`Google API fout: ${errData.error.message}`);
+                }
+
+                const data2 = await res2.json();
+                const feedback = data2.candidates[0].content.parts[0].text;
+
+                // STAP 3: Claude optimaliseert de finale versie
+                loadingNode.innerHTML = `
+                    <div class="loading-step">✓ Claude heeft een aanzet gemaakt</div>
+                    <div class="loading-step">✓ Gemini heeft gecontroleerd</div>
+                    <div class="loading-step"><div class="spinner"></div> Claude optimaliseert...</div>
                 `;
 
                 const striktePrompt = `Herschrijf het volgende antwoord op de vraag met behulp van de gegeven feedback. Belangrijk: Geef UITSLUITEND het herschreven eindresultaat terug. Voeg absoluut geen inleidende of afsluitende zinnen toe (zoals "Hier is het aangepaste antwoord" of "Ik heb het verbeterd"). Reageer niet op de feedback zelf en begin direct met de eerste letter van de definitieve tekst.\n\nVraag: ${prompt}\n\nEerste antwoord: ${draft}\n\nFeedback: ${feedback}`;
 
-                const res3 = await fetch(geminiUrl, {
+                const res3 = await fetch(claudeUrl, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: striktePrompt }] }] })
+                    headers: claudeHeaders,
+                    body: JSON.stringify({
+                        model: claudeModel,
+                        max_tokens: 2048,
+                        messages: [{ role: "user", content: striktePrompt }]
+                    })
                 });
-                
-                const data3 = await res3.json();
-                const final = data3.candidates[0].content.parts[0].text;
 
-                // Verwijder het tijdelijke laadscherm volledig
+                if (!res3.ok) {
+                    const errClaude = await res3.json();
+                    let detailMessage = errClaude.error ? errClaude.error.message : 'Onbekende API fout';
+                    throw new Error(`Claude API fout: ${detailMessage}`);
+                }
+
+                const data3 = await res3.json();
+                const final = data3.content[0].text;
+
                 loadingNode.remove();
 
-                // Toon het opgeschoonde eindresultaat
                 appendMessage('ai', final);
                 
-                // Sla alleen de prompt en het antwoord op in de browser, geen laadstappen
                 const chatIndex = chats.findIndex(c => c.id === currentChatId);
                 chats[chatIndex].messages.push({ role: 'user', content: prompt });
                 chats[chatIndex].messages.push({ role: 'ai', content: final });
@@ -485,10 +492,9 @@
 
             } catch (e) {
                 console.error(e);
-                loadingNode.remove(); // Verberg het laadscherm ook bij een fout
+                loadingNode.remove();
                 appendMessage('error', `Fout: ${e.message}`);
             } finally {
-                // Herstel de verzendknop
                 sendBtn.disabled = false;
                 sendBtn.style.backgroundColor = "#8e1f2f";
             }
