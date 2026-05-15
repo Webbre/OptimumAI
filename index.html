@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ewout's Optimum AI</title>
     <link rel="icon" href="data:,">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         /* Basisstijl en layout */
         body {
@@ -115,6 +116,41 @@
             border-left: 4px solid #8e1f2f;
         }
 
+        /* -----------------------------------------------------
+           MARKDOWN STYLING VOOR AI BERICHTEN
+           ----------------------------------------------------- */
+        .ai-message p {
+            margin: 0 0 10px 0;
+        }
+        .ai-message p:last-child {
+            margin-bottom: 0;
+        }
+        /* Hoofdkopjes vetgedrukt en zelfde lettergrootte */
+        .ai-message h1, .ai-message h2 {
+            font-size: 15px; 
+            font-weight: bold;
+            margin: 15px 0 5px 0;
+        }
+        /* Subkopjes onderstreept en zelfde lettergrootte */
+        .ai-message h3, .ai-message h4 {
+            font-size: 15px;
+            font-weight: normal;
+            text-decoration: underline;
+            margin: 15px 0 5px 0;
+        }
+        .ai-message h1:first-child, .ai-message h2:first-child, .ai-message h3:first-child {
+            margin-top: 0;
+        }
+        /* Lijsten met bullets, geen ruimte tussen bullets */
+        .ai-message ul, .ai-message ol {
+            margin: 5px 0 10px 0;
+            padding-left: 20px;
+        }
+        .ai-message li {
+            margin-bottom: 0px; 
+        }
+        /* ----------------------------------------------------- */
+
         .error-message {
             align-self: flex-start;
             background-color: #fce4e4;
@@ -139,6 +175,27 @@
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .workflow-steps {
+            align-self: flex-start;
+            background-color: #fdfcfb;
+            border-left: 3px solid #f0b516;
+            padding: 10px 15px;
+            border-radius: 0 10px 10px 0;
+            font-size: 13px;
+            color: #5f6368;
+            margin-bottom: -5px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-style: italic;
+        }
+        
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         /* CSS Animatie voor de spinner */
@@ -280,7 +337,6 @@
             document.getElementById('geminiKey').value = localStorage.getItem('webbreGemini') || '';
             document.getElementById('claudeKey').value = localStorage.getItem('webbreClaude') || '';
             
-            // Controleer of er een oud Haiku model of Sonnet model staat en vervang met de krachtigste Opus
             let opgeslagenClaudeModel = localStorage.getItem('webbreClaudeModel');
             if (!opgeslagenClaudeModel || opgeslagenClaudeModel.includes('haiku') || opgeslagenClaudeModel.includes('sonnet') || opgeslagenClaudeModel.includes('3-')) {
                 opgeslagenClaudeModel = 'claude-opus-4-7'; 
@@ -336,7 +392,7 @@
 
         function startNewChat() {
             currentChatId = null;
-            document.getElementById('chat-window').innerHTML = '<div class="message ai-message">Nieuw gesprek gestart in Ewout\'s Optimum AI LLM.</div>';
+            document.getElementById('chat-window').innerHTML = '<div class="message ai-message">Welkom bij Ewout\'s Optimum AI LLM. Hoe kan ik je vandaag helpen?</div>';
             document.getElementById('userPrompt').value = '';
             renderHistory();
         }
@@ -356,13 +412,27 @@
             
             if (role === 'error') {
                 div.className = 'message error-message';
+                div.innerText = content;
+            } else if (role === 'steps') {
+                div.className = 'workflow-steps';
+                content.forEach(step => {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'workflow-step';
+                    stepDiv.innerText = step;
+                    div.appendChild(stepDiv);
+                });
+            } else if (role === 'ai') {
+                div.className = 'message ai-message';
+                // Zet raw markdown om naar visuele HTML
+                div.innerHTML = marked.parse(content);
             } else {
-                div.className = `message ${role === 'user' ? 'user-message' : 'ai-message'}`;
+                div.className = `message user-message`;
+                div.innerText = content;
             }
             
-            div.innerText = content;
             window.appendChild(div);
             window.scrollTop = window.scrollHeight;
+            return div;
         }
 
         async function startWorkflow() {
@@ -459,7 +529,20 @@
                     <div class="loading-step"><div class="spinner"></div> Claude optimaliseert...</div>
                 `;
 
-                const striktePrompt = `Herschrijf het volgende antwoord op de vraag met behulp van de gegeven feedback. Belangrijk: Geef UITSLUITEND het herschreven eindresultaat terug. Voeg absoluut geen inleidende of afsluitende zinnen toe (zoals "Hier is het aangepaste antwoord" of "Ik heb het verbeterd"). Reageer niet op de feedback zelf en begin direct met de eerste letter van de definitieve tekst.\n\nVraag: ${prompt}\n\nEerste antwoord: ${draft}\n\nFeedback: ${feedback}`;
+                // Aangescherpte prompt engineering voor specifieke layout en taaleisen
+                const striktePrompt = `Herschrijf het volgende antwoord op de vraag met behulp van de gegeven feedback. Belangrijk: Geef UITSLUITEND het herschreven eindresultaat terug. Voeg absoluut geen inleidende of afsluitende zinnen toe (zoals "Hier is het aangepaste antwoord" of "Ik heb het verbeterd"). Reageer niet op de feedback zelf en begin direct met de eerste letter van de definitieve tekst.
+
+Pas daarnaast strikt de volgende opmaakregels toe:
+1. Gebruik Markdown hoofdkopjes (##) voor titels.
+2. Gebruik Markdown subkopjes (###) voor subtitels.
+3. Gebruik Markdown opsommingstekens (-) voor lijsten.
+4. Schrijf de tekst in natuurlijk Nederlands: gebruik UITSLUITEND een hoofdletter aan het begin van een zin of bij eigennamen. Elk woord in een titel met een hoofdletter schrijven (Title Case) is verboden.
+
+Vraag: ${prompt}
+
+Eerste antwoord: ${draft}
+
+Feedback: ${feedback}`;
 
                 const res3 = await fetch(claudeUrl, {
                     method: "POST",
@@ -482,10 +565,18 @@
 
                 loadingNode.remove();
 
+                const finaleStappen = [
+                    "✓ Claude heeft een aanzet gemaakt",
+                    "✓ Gemini heeft gecontroleerd",
+                    "✓ Claude heeft geoptimaliseerd"
+                ];
+
+                appendMessage('steps', finaleStappen);
                 appendMessage('ai', final);
                 
                 const chatIndex = chats.findIndex(c => c.id === currentChatId);
                 chats[chatIndex].messages.push({ role: 'user', content: prompt });
+                chats[chatIndex].messages.push({ role: 'steps', content: finaleStappen });
                 chats[chatIndex].messages.push({ role: 'ai', content: final });
                 localStorage.setItem('webbre_chats', JSON.stringify(chats));
                 renderHistory();
