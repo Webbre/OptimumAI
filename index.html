@@ -127,6 +127,7 @@
             display: flex;
             flex-direction: column;
             gap: 20px; 
+            scroll-behavior: smooth; /* Zorgt voor zachte scroll-animaties */
         }
 
         /* Welcome text positioning & styling */
@@ -235,7 +236,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Input area styling met Fade-Out overgang - NIEUW: Eenzelfde lichtgroene achtergrond als body */
+        /* Input area styling met Fade-Out overgang */
         #input-container {
             padding: 10px 20px 20px 20px;
             background: #F4F9EB; 
@@ -243,7 +244,7 @@
             z-index: 10;
         }
 
-        /* De Fade-out Gradient - NIEUW: Fadet van transparant naar exact de lichtgroene kleur (#F4F9EB / 244, 249, 235) */
+        /* De Fade-out Gradient */
         #input-container::before {
             content: '';
             position: absolute;
@@ -302,7 +303,7 @@
             color: #2094D0;
         }
 
-        /* Send button */
+        /* Send button using primary blue */
         button.send-btn {
             background-color: #2094D0; 
             color: white;
@@ -322,7 +323,7 @@
             transform: scale(0.97); 
         }
 
-        /* Stop button */
+        /* Stop button using standard UX red */
         button.send-btn.stop-btn {
             background-color: #cc0000;
         }
@@ -541,7 +542,8 @@
             if (query) { filterHistory(); } else { renderHistory(); }
         }
 
-        function appendMessage(role, content) {
+        // De parameter autoScroll toegevoegd, standaard staat deze aan (true)
+        function appendMessage(role, content, autoScroll = true) {
             const window = document.getElementById('chat-window');
             
             const welcome = window.querySelector('.welcome-container');
@@ -571,7 +573,12 @@
             }
             
             window.appendChild(div);
-            window.scrollTop = window.scrollHeight;
+            
+            // Alleen direct naar het einde scrollen als we dat expliciet willen
+            if (autoScroll) {
+                window.scrollTop = window.scrollHeight;
+            }
+            
             return div;
         }
 
@@ -727,8 +734,15 @@ Feedback: ${feedback}`;
                     `<span class="workflow-done">✓</span> Claude heeft geoptimaliseerd`
                 ];
 
-                appendMessage('steps', finaleStappen);
-                appendMessage('ai', final);
+                // Let op: false toegevoegd zodat de pagina niet meer automatisch naar de bodem knalt
+                const stepsDiv = appendMessage('steps', finaleStappen, false);
+                const finalMsgDiv = appendMessage('ai', final, false);
+
+                // Scroll soepel naar de bovenkant van het nieuwe blok (inclusief de vinkjes)
+                chatWindow.scrollTo({
+                    top: stepsDiv.offsetTop - 20,
+                    behavior: 'smooth'
+                });
 
                 const chatIndex = chats.findIndex(c => c.id === currentChatId);
                 chats[chatIndex].messages.push({ role: 'user', content: prompt });
