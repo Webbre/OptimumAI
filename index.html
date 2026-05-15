@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        /* Base layout & body background - Zachtgrijs voor contrast */
+        /* Base layout & body background */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -16,13 +16,13 @@
             background-color: #F4F7FA; 
         }
 
-        /* Sidebar - Zeer zacht lichtblauw in de lijn van de primaire kleur */
+        /* Sidebar */
         #sidebar {
             width: 260px;
             background-color: #EBF5FB; 
             box-shadow: 2px 0 10px rgba(0,0,0,0.03);
-            border-top: 5px solid #2094D0; /* Primaire Blauw uit logo */
-            border-right: 2px solid #E2E8F0; /* Duidelijke verticale scheiding */
+            border-top: 5px solid #2094D0; 
+            border-right: 2px solid #E2E8F0; 
             display: flex;
             flex-direction: column;
             padding: 15px;
@@ -30,7 +30,7 @@
             z-index: 10;
         }
 
-        /* New Chat Button - Het heldere groen uit het logo */
+        /* New Chat Button */
         .new-chat-btn {
             background: #98C93C; 
             color: white;
@@ -39,9 +39,10 @@
             border-radius: 20px;
             cursor: pointer;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             transition: all 0.3s ease;
             box-shadow: 0 4px 6px rgba(152, 201, 60, 0.3);
+            flex-shrink: 0;
         }
 
         .new-chat-btn:hover {
@@ -50,10 +51,34 @@
             box-shadow: 0 6px 8px rgba(152, 201, 60, 0.4);
         }
 
+        /* Zoekbalk Styling (NIEUW) */
+        .search-container {
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #CBD5E0;
+            border-radius: 20px;
+            font-size: 13px;
+            box-sizing: border-box;
+            background-color: white;
+            color: #2D3748;
+            transition: all 0.3s;
+        }
+
+        #search-input:focus {
+            outline: none;
+            border-color: #2094D0;
+            box-shadow: 0 0 0 2px rgba(32, 148, 208, 0.15);
+        }
+
         /* Date headers */
         .date-header {
             font-size: 12px;
-            color: #2094D0; /* Branding blue */
+            color: #2094D0; 
             margin-top: 15px;
             margin-bottom: 5px;
             font-weight: bold;
@@ -76,7 +101,7 @@
         }
 
         .history-item:hover {
-            background-color: #DDEBF4; /* Iets donkerder blauw bij hover */
+            background-color: #DDEBF4; 
         }
 
         /* Active history item */
@@ -97,14 +122,14 @@
 
         #chat-window {
             flex: 1;
-            padding: 20px 20px 100px 20px; /* Padding voor de fade out */
+            padding: 20px 20px 100px 20px; 
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 20px; 
         }
 
-        /* Welcome text positioning & styling - Links uitgelijnd */
+        /* Welcome text positioning & styling */
         .welcome-container {
             margin: 6vh 0 0 0; 
             text-align: left;
@@ -113,7 +138,7 @@
         }
 
         .welcome-title {
-            color: #2094D0; /* Branding blue */
+            color: #2094D0; 
             font-size: 32px;
             font-weight: bold;
             margin-bottom: 10px;
@@ -134,7 +159,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
-        /* User Message Bubble - Blauw uit logo */
+        /* User Message Bubble */
         .user-message {
             align-self: flex-end;
             background-color: #2094D0; 
@@ -143,7 +168,7 @@
             border-bottom-right-radius: 4px;
         }
 
-        /* AI Message Bubble - Blauwe accent border uit logo */
+        /* AI Message Bubble */
         .ai-message {
             align-self: flex-start;
             background-color: white;
@@ -230,7 +255,6 @@
             pointer-events: none; 
         }
 
-        /* NIEUW: max-width weer exact gelijk getrokken aan de AI-berichten (80%) */
         .input-wrapper {
             max-width: 80%; 
             margin: 0; 
@@ -307,7 +331,7 @@
             background-color: #990000;
         }
 
-        /* Settings modal styling primary blue border & deep blue-grey header */
+        /* Settings modal styling */
         #settings-modal {
             display: none;
             position: fixed;
@@ -356,6 +380,11 @@
 
     <div id="sidebar">
         <button class="new-chat-btn" onclick="startNewChat()">+ Nieuw gesprek</button>
+        
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Zoek in chats..." oninput="filterHistory()">
+        </div>
+
         <div id="history-list"></div>
     </div>
 
@@ -437,12 +466,40 @@
             }
         }
 
-        function renderHistory() {
+        // NIEUW: Functie om de geschiedenis te filteren op basis van zoekopdracht
+        function filterHistory() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            
+            if (!query) {
+                renderHistory(chats); // Als het zoekveld leeg is, laat alles zien
+                return;
+            }
+
+            const filteredChats = chats.filter(chat => {
+                // Zoek in de titel
+                if (chat.title && chat.title.toLowerCase().includes(query)) return true;
+                
+                // Zoek diep in de content van de berichten (vragen en antwoorden)
+                if (chat.messages) {
+                    for (let msg of chat.messages) {
+                        if (typeof msg.content === 'string' && msg.content.toLowerCase().includes(query)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            });
+
+            renderHistory(filteredChats);
+        }
+
+        // AANGEPAST: renderHistory accepteert nu een specifieke lijst met chats om weer te geven
+        function renderHistory(chatsToRender = chats) {
             const list = document.getElementById('history-list');
             list.innerHTML = '';
             
             const grouped = {};
-            chats.slice().reverse().forEach(chat => {
+            chatsToRender.slice().reverse().forEach(chat => {
                 const dateKey = chat.date || 'Onbekende datum';
                 if (!grouped[dateKey]) grouped[dateKey] = [];
                 grouped[dateKey].push(chat);
@@ -466,6 +523,7 @@
 
         function startNewChat() {
             currentChatId = null;
+            document.getElementById('search-input').value = ''; // Maak zoekveld leeg bij nieuwe chat
             document.getElementById('chat-window').innerHTML = `
                 <div class="welcome-container">
                     <div class="welcome-title">Ewout's Optimum AI LLM</div>
@@ -482,7 +540,10 @@
             const window = document.getElementById('chat-window');
             window.innerHTML = '';
             chat.messages.forEach(msg => appendMessage(msg.role, msg.content));
-            renderHistory();
+            
+            // Ververs de lijst zodat de actieve chat netjes wordt uitgelicht
+            const query = document.getElementById('search-input').value;
+            if (query) { filterHistory(); } else { renderHistory(); }
         }
 
         function appendMessage(role, content) {
@@ -679,7 +740,10 @@ Feedback: ${feedback}`;
                 chats[chatIndex].messages.push({ role: 'steps', content: finaleStappen });
                 chats[chatIndex].messages.push({ role: 'ai', content: final });
                 localStorage.setItem('webbre_chats', JSON.stringify(chats));
-                renderHistory();
+                
+                // Controleer na het opslaan of de zoekbalk actief is
+                const query = document.getElementById('search-input').value;
+                if (query) { filterHistory(); } else { renderHistory(); }
 
             } catch (e) {
                 loadingNode.remove();
