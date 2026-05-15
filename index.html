@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        /* Base layout & body background - Lichtgroen voor het chatgedeelte */
+        /* Base layout & body background - Lichtgroen */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -16,13 +16,13 @@
             background-color: #F4F9EB; 
         }
 
-        /* Sidebar - Zeer zacht lichtblauw in de lijn van de primaire kleur */
+        /* Sidebar */
         #sidebar {
             width: 260px;
             background-color: #EBF5FB; 
             box-shadow: 2px 0 10px rgba(0,0,0,0.03);
-            border-top: 5px solid #2094D0; /* Primaire Blauw uit logo */
-            border-right: 2px solid #E2E8F0; /* Duidelijke verticale scheiding */
+            border-top: 5px solid #2094D0; 
+            border-right: 2px solid #E2E8F0; 
             display: flex;
             flex-direction: column;
             padding: 15px;
@@ -30,7 +30,7 @@
             z-index: 10;
         }
 
-        /* New Chat Button - Het heldere groen uit het logo */
+        /* New Chat Button */
         .new-chat-btn {
             background: #98C93C; 
             color: white;
@@ -235,15 +235,15 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Input area styling met Fade-Out overgang - NIEUW: Teruggezet naar zachtgrijs/blauw */
+        /* Input area styling met Fade-Out overgang - NIEUW: Eenzelfde lichtgroene achtergrond als body */
         #input-container {
             padding: 10px 20px 20px 20px;
-            background: #F4F7FA; 
+            background: #F4F9EB; 
             position: relative;
             z-index: 10;
         }
 
-        /* De Fade-out Gradient - NIEUW: Fadet vloeiend van transparant naar de achtergrond van het invoerblok */
+        /* De Fade-out Gradient - NIEUW: Fadet van transparant naar exact de lichtgroene kleur (#F4F9EB / 244, 249, 235) */
         #input-container::before {
             content: '';
             position: absolute;
@@ -251,7 +251,7 @@
             left: 0;
             right: 0;
             height: 100px; 
-            background: linear-gradient(to bottom, rgba(244,247,250,0) 0%, rgba(244,247,250,1) 100%);
+            background: linear-gradient(to bottom, rgba(244,249,235,0) 0%, rgba(244,249,235,1) 100%);
             pointer-events: none; 
         }
 
@@ -302,7 +302,7 @@
             color: #2094D0;
         }
 
-        /* Send button using primary blue */
+        /* Send button */
         button.send-btn {
             background-color: #2094D0; 
             color: white;
@@ -322,7 +322,7 @@
             transform: scale(0.97); 
         }
 
-        /* Stop button using standard UX red */
+        /* Stop button */
         button.send-btn.stop-btn {
             background-color: #cc0000;
         }
@@ -331,7 +331,7 @@
             background-color: #990000;
         }
 
-        /* Settings modal styling primary blue border & deep blue-grey header */
+        /* Settings modal styling */
         #settings-modal {
             display: none;
             position: fixed;
