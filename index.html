@@ -32,19 +32,10 @@
         }
 
         .new-chat-btn {
-            background: #98C93C; 
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(152, 201, 60, 0.3);
-            flex-shrink: 0;
+            background: #98C93C; color: white; border: none; padding: 12px; border-radius: 20px;
+            cursor: pointer; font-weight: bold; margin-bottom: 15px; transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(152, 201, 60, 0.3); flex-shrink: 0;
         }
-
         .new-chat-btn:hover { background: #85B334; transform: translateY(-1px); }
 
         /* Zoekbalk */
@@ -132,8 +123,16 @@
         .send-btn:hover { background-color: #1A7BAE; }
         .stop-btn { background-color: #cc0000 !important; }
 
-        /* History & Headers */
-        .category-header { font-size: 12px; color: #2094D0; margin-top: 15px; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; padding-left: 5px; }
+        /* History & Headers - AANGEPAST VOOR INKLAPPEN */
+        .category-header { 
+            font-size: 12px; color: #2094D0; margin-top: 15px; margin-bottom: 5px; 
+            font-weight: bold; text-transform: uppercase; padding-left: 5px; 
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; user-select: none; transition: opacity 0.2s;
+        }
+        .category-header:hover { opacity: 0.7; }
+        .chevron { transition: transform 0.2s ease; font-size: 10px; }
+        .chevron.collapsed { transform: rotate(-90deg); }
         
         .history-item { 
             padding: 10px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; 
@@ -183,7 +182,7 @@
         <div id="input-container">
             <div class="input-wrapper">
                 <select id="chatCategory" class="category-select">
-                    <option value="Werk & School">💼 Werk & School</option>
+                    <option value="Werk & school">💼 Werk & school</option>
                     <option value="Privé">🏠 Privé</option>
                 </select>
                 <textarea id="userPrompt" rows="6" placeholder="Stel een vraag... (Shift + Enter voor een nieuwe regel)"></textarea>
@@ -245,6 +244,7 @@
 
         let currentChatId = null;
         let abortController = null;
+        let collapsedCategories = new Set(); // Slaat op welke menu's dichtgeklapt zijn
 
         const StorageService = {
             async getChats() { return JSON.parse(localStorage.getItem('webbre_chats') || '[]'); },
@@ -278,7 +278,6 @@
             
             document.getElementById('userPrompt').addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); startWorkflow(); } });
             
-            // Als je de categorie aanpast, bewaar dit dan direct voor de actieve chat
             document.getElementById('chatCategory').addEventListener('change', async (e) => {
                 if (currentChatId) {
                     const chats = await StorageService.getChats();
@@ -310,7 +309,38 @@
             } else { m.style.display = 'block'; }
         }
 
-        // --- MODULE: HISTORY MET CATEGORIEEN ---
+        // --- MODULE: HISTORY MET INKLAPBARE CATEGORIEEN ---
+        function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
+            if (chatsArray.length === 0) return;
+            
+            const header = document.createElement('div');
+            header.className = 'category-header';
+            const isCollapsed = collapsedCategories.has(categoryId);
+            
+            header.innerHTML = `<span>${title}</span><span class="chevron ${isCollapsed ? 'collapsed' : ''}">▼</span>`;
+            
+            // Klik event voor in/uitklappen
+            header.onclick = () => {
+                if (collapsedCategories.has(categoryId)) {
+                    collapsedCategories.delete(categoryId);
+                } else {
+                    collapsedCategories.add(categoryId);
+                }
+                updateHistoryDisplay();
+            };
+            
+            listElement.appendChild(header);
+
+            // Alleen de items tekenen als hij NIET is dichtgeklapt
+            if (!isCollapsed) {
+                const container = document.createElement('div');
+                chatsArray.sort((a,b) => (b.updatedAt || b.id) - (a.updatedAt || a.id)).forEach(c => {
+                    container.appendChild(createHistoryElement(c));
+                });
+                listElement.appendChild(container);
+            }
+        }
+
         async function updateHistoryDisplay() {
             const chats = await StorageService.getChats();
             const query = document.getElementById('search-input').value.toLowerCase().trim();
@@ -320,23 +350,13 @@
             const pinned = filtered.filter(c => c.pinned);
             const unpinned = filtered.filter(c => !c.pinned);
             
-            const werkChats = unpinned.filter(c => c.category === 'Werk & School');
-            const priveChats = unpinned.filter(c => c.category === 'Privé' || !c.category); // Fallback naar Privé
+            // Fallback voor oude "Werk & School" (met grote S) is hier meegenomen
+            const werkChats = unpinned.filter(c => c.category === 'Werk & school' || c.category === 'Werk & School');
+            const priveChats = unpinned.filter(c => c.category !== 'Werk & school' && c.category !== 'Werk & School');
 
-            if (pinned.length > 0) {
-                const h = document.createElement('div'); h.className = 'category-header'; h.innerText = '📌 Vastgezet'; list.appendChild(h);
-                pinned.sort((a,b) => (b.updatedAt || b.id) - (a.updatedAt || a.id)).forEach(c => list.appendChild(createHistoryElement(c)));
-            }
-
-            if (werkChats.length > 0) {
-                const h = document.createElement('div'); h.className = 'category-header'; h.innerText = '💼 Werk & School'; list.appendChild(h);
-                werkChats.sort((a,b) => (b.updatedAt || b.id) - (a.updatedAt || a.id)).forEach(c => list.appendChild(createHistoryElement(c)));
-            }
-
-            if (priveChats.length > 0) {
-                const h = document.createElement('div'); h.className = 'category-header'; h.innerText = '🏠 Privé'; list.appendChild(h);
-                priveChats.sort((a,b) => (b.updatedAt || b.id) - (a.updatedAt || a.id)).forEach(c => list.appendChild(createHistoryElement(c)));
-            }
+            renderCategoryGroup('📌 Vastgezet', pinned, 'pinned', list);
+            renderCategoryGroup('💼 Werk & school', werkChats, 'werk', list);
+            renderCategoryGroup('🏠 Privé', priveChats, 'prive', list);
         }
 
         function createHistoryElement(chat) {
@@ -353,8 +373,8 @@
             const win = document.getElementById('chat-window'); win.innerHTML = '';
             
             if (chat) {
-                // Update dropdown naar de categorie van deze chat
-                if (chat.category) document.getElementById('chatCategory').value = chat.category;
+                // Update dropdown naar juiste categorie (of Privé als fallback)
+                document.getElementById('chatCategory').value = chat.category === 'Werk & School' ? 'Werk & school' : (chat.category || 'Privé');
                 chat.messages.forEach(m => appendMessage(m.role, m.content, false));
             }
             updateHistoryDisplay();
