@@ -16,7 +16,7 @@
             background-color: #F4F9EB; 
         }
 
-        /* Sidebar */
+        /* Sidebar - Zeer zacht lichtblauw in de lijn van de primaire kleur */
         #sidebar {
             width: 260px;
             background-color: #EBF5FB; 
@@ -420,12 +420,40 @@
     </div>
 
     <script>
-        const vastGeminiModel = 'gemini-2.5-flash'; 
+        // CONFIGURATIE EN GLOBALE VARIABELEN
+        const VAST_GEMINI_MODEL = 'gemini-2.5-flash'; 
+        
+        const WORKFLOW_STEPS_TEXTS = {
+            CLAUDE_DRAFT: 'Claude maakt een aanzet',
+            GEMINI_CHECK: 'Gemini controleert',
+            CLAUDE_OPTIMIZE: 'Claude optimaliseert'
+        };
+
+        const PROMPTS = {
+            TITEL: (promptText) => `Bedenk een ultrakorte, logische titel (maximaal 2 tot 4 woorden) voor de volgende vraag. Geef UITSLUITEND de titel terug, zonder aanhalingstekens of extra uitleg. Regel voor opmaak: schrijf ALLEEN de eerste letter van de titel met een hoofdletter, de rest strikt in kleine letters (behalve eigennamen).\n\nVraag: ${promptText}`,
+            
+            GEMINI_REVIEW: (promptText, draft) => `Review dit antwoord op de vraag: "${promptText}". Antwoord: ${draft}`,
+            
+            STRIKTE_REWRITE: (promptText, draft, feedback) => `Herschrijf het volgende antwoord op de vraag met behulp van de gegeven feedback. Belangrijk: Geef UITSLUITEND het herschreven eindresultaat terug. Voeg absoluut geen inleidende of afsluitende zinnen toe (zoals "Hier is het aangepaste antwoord" of "Ik heb het verbeterd"). Reageer niet op de feedback zelf en begin direct met de eerste letter van de definitieve tekst.
+
+Pas daarnaast strikt de volgende opmaakregels toe:
+1. Gebruik Markdown hoofdkopjes (##) voor titels.
+2. Gebruik Markdown subkopjes (###) voor subtitels.
+3. Gebruik Markdown opsommingstekens (-) voor lijsten.
+4. Schrijf de tekst in natuurlijk Nederlands: gebruik UITSLUITEND een hoofdletter aan het begin van een zin of bij eigennamen. Elk woord in een titel met een hoofdletter schrijven (Title Case) is verboden.
+
+Vraag: ${promptText}
+
+Eerste antwoord: ${draft}
+
+Feedback: ${feedback}`
+        };
 
         let chats = JSON.parse(localStorage.getItem('webbre_chats') || '[]');
         let currentChatId = null;
         let abortController = null;
 
+        // INITIALISATIE
         window.onload = () => {
             loadKeys();
             renderHistory();
@@ -438,6 +466,7 @@
             });
         };
 
+        // INSTELLINGEN BEHEER
         function loadKeys() {
             document.getElementById('geminiKey').value = localStorage.getItem('webbreGemini') || '';
             document.getElementById('claudeKey').value = localStorage.getItem('webbreClaude') || '';
@@ -464,6 +493,16 @@
                 modal.style.display = 'none';
             } else {
                 modal.style.display = 'block';
+            }
+        }
+
+        // CHAT HISTORIE FUNCTIES
+        function updateHistoryDisplay() {
+            const query = document.getElementById('search-input').value.trim();
+            if (query) {
+                filterHistory();
+            } else {
+                renderHistory();
             }
         }
 
@@ -537,11 +576,10 @@
             const window = document.getElementById('chat-window');
             window.innerHTML = '';
             chat.messages.forEach(msg => appendMessage(msg.role, msg.content));
-            
-            const query = document.getElementById('search-input').value;
-            if (query) { filterHistory(); } else { renderHistory(); }
+            updateHistoryDisplay();
         }
 
+        // CHAT INTERFACE UPDATES
         function appendMessage(role, content, autoScroll = true) {
             const window = document.getElementById('chat-window');
             
@@ -580,39 +618,78 @@
             return div;
         }
 
-        // AANGEPAST: Striktere prompt instructie voor kleine letters
-        async function generateChatTitle(promptText, chatId, geminiKey) {
+        // API HELPER FUNCTIES
+        async function callClaude(messages, signal) {
+            const claudeKey = (localStorage.getItem('webbreClaude') || '').trim();
+            const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-opus-4-7').trim();
+
+            const claudeUrl = "https://api.anthropic.com/v1/messages";
+            const claudeHeaders = {
+                "x-api-key": claudeKey,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+                "anthropic-dangerous-direct-browser-access": "true"
+            };
+
+            const res = await fetch(claudeUrl, {
+                method: "POST",
+                headers: claudeHeaders,
+                body: JSON.stringify({
+                    model: claudeModel,
+                    max_tokens: 2048,
+                    messages: messages
+                }),
+                signal: signal
+            });
+
+            if (!res.ok) {
+                const errClaude = await res.json();
+                let detailMessage = errClaude.error ? errClaude.error.message : 'Onbekende API fout';
+                throw new Error(`Claude API fout: ${detailMessage}`);
+            }
+
+            const data = await res.json();
+            return data.content[0].text;
+        }
+
+        async function callGemini(promptText, signal = null) {
+            const geminiKey = (localStorage.getItem('webbreGemini') || '').trim();
+            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${VAST_GEMINI_MODEL}:generateContent?key=${geminiKey}`;
+
+            const res = await fetch(geminiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
+                signal: signal
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(`Google API fout: ${errData.error?.message || 'Onbekende fout'}`);
+            }
+
+            const data = await res.json();
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        // ACHTERGRONDTAKEN
+        async function generateChatTitle(promptText, chatId) {
             try {
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${vastGeminiModel}:generateContent?key=${geminiKey}`;
-                
-                // Extra instructie toegevoegd over hoofdletters
-                const titelPrompt = `Bedenk een ultrakorte, logische titel (maximaal 2 tot 4 woorden) voor de volgende vraag. Geef UITSLUITEND de titel terug, zonder aanhalingstekens of extra uitleg. Regel voor opmaak: schrijf ALLEEN de eerste letter van de titel met een hoofdletter, de rest strikt in kleine letters (behalve eigennamen).\n\nVraag: ${promptText}`;
+                let nieuweTitel = await callGemini(PROMPTS.TITEL(promptText));
+                nieuweTitel = nieuweTitel.trim().replace(/^["']|["']$/g, '');
 
-                const res = await fetch(geminiUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: titelPrompt }] }] })
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    let nieuweTitel = data.candidates[0].content.parts[0].text.trim();
-                    nieuweTitel = nieuweTitel.replace(/^["']|["']$/g, '');
-
-                    const chatIndex = chats.findIndex(c => c.id === chatId);
-                    if (chatIndex !== -1) {
-                        chats[chatIndex].title = nieuweTitel;
-                        localStorage.setItem('webbre_chats', JSON.stringify(chats));
-                        
-                        const query = document.getElementById('search-input').value;
-                        if (query) { filterHistory(); } else { renderHistory(); }
-                    }
+                const chatIndex = chats.findIndex(c => c.id === chatId);
+                if (chatIndex !== -1) {
+                    chats[chatIndex].title = nieuweTitel;
+                    localStorage.setItem('webbre_chats', JSON.stringify(chats));
+                    updateHistoryDisplay();
                 }
             } catch (e) {
                 console.error("Fout bij het genereren van de slimme titel op de achtergrond:", e);
             }
         }
 
+        // HOOFD WORKFLOW
         async function startWorkflow() {
             const sendBtn = document.getElementById('sendBtn');
             const userPromptElement = document.getElementById('userPrompt');
@@ -625,7 +702,6 @@
             const prompt = userPromptElement.value.trim();
             const geminiKey = (localStorage.getItem('webbreGemini') || '').trim();
             const claudeKey = (localStorage.getItem('webbreClaude') || '').trim();
-            const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-opus-4-7').trim();
             const chatWindow = document.getElementById('chat-window');
 
             if (!prompt) return;
@@ -648,7 +724,7 @@
                     messages: [] 
                 });
                 
-                generateChatTitle(prompt, currentChatId, geminiKey);
+                generateChatTitle(prompt, currentChatId);
             }
 
             abortController = new AbortController();
@@ -669,105 +745,30 @@
 
             try {
                 // STAP 1: Claude maakt eerste aanzet
-                loadingNode.innerHTML = `<div class="loading-step"><div class="spinner"></div> Claude maakt een aanzet...</div>`;
-                
-                const claudeUrl = "https://api.anthropic.com/v1/messages";
-                const claudeHeaders = {
-                    "x-api-key": claudeKey,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
-                    "anthropic-dangerous-direct-browser-access": "true"
-                };
-
-                const res1 = await fetch(claudeUrl, {
-                    method: "POST",
-                    headers: claudeHeaders,
-                    body: JSON.stringify({
-                        model: claudeModel,
-                        max_tokens: 2048,
-                        messages: [{ role: "user", content: prompt }]
-                    }),
-                    signal: signal
-                });
-
-                if (!res1.ok) {
-                    const errClaude = await res1.json();
-                    let detailMessage = errClaude.error ? errClaude.error.message : 'Onbekende API fout';
-                    throw new Error(`Claude API fout: ${detailMessage}`);
-                }
-
-                const data1 = await res1.json();
-                const draft = data1.content[0].text;
+                loadingNode.innerHTML = `<div class="loading-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DRAFT}...</div>`;
+                const draft = await callClaude([{ role: "user", content: prompt }], signal);
 
                 // STAP 2: Gemini geeft feedback
                 loadingNode.innerHTML = `
-                    <div class="loading-step"><span class="workflow-done">✓</span> Claude heeft een aanzet gemaakt</div>
-                    <div class="loading-step"><div class="spinner"></div> Gemini controleert...</div>
+                    <div class="loading-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DRAFT}</div>
+                    <div class="loading-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.GEMINI_CHECK}...</div>
                 `;
-
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${vastGeminiModel}:generateContent?key=${geminiKey}`;
-                const res2 = await fetch(geminiUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: `Review dit antwoord op de vraag: "${prompt}". Antwoord: ${draft}` }] }] }),
-                    signal: signal
-                });
-                
-                if (!res2.ok) {
-                    const errData = await res2.json();
-                    throw new Error(`Google API fout: ${errData.error.message}`);
-                }
-
-                const data2 = await res2.json();
-                const feedback = data2.candidates[0].content.parts[0].text;
+                const feedback = await callGemini(PROMPTS.GEMINI_REVIEW(prompt, draft), signal);
 
                 // STAP 3: Claude optimaliseert de finale versie
                 loadingNode.innerHTML = `
-                    <div class="loading-step"><span class="workflow-done">✓</span> Claude heeft een aanzet gemaakt</div>
-                    <div class="loading-step"><span class="workflow-done">✓</span> Gemini heeft gecontroleerd</div>
-                    <div class="loading-step"><div class="spinner"></div> Claude optimaliseert...</div>
+                    <div class="loading-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DRAFT}</div>
+                    <div class="loading-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_CHECK}</div>
+                    <div class="loading-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_OPTIMIZE}...</div>
                 `;
-
-                const striktePrompt = `Herschrijf het volgende antwoord op de vraag met behulp van de gegeven feedback. Belangrijk: Geef UITSLUITEND het herschreven eindresultaat terug. Voeg absoluut geen inleidende of afsluitende zinnen toe (zoals "Hier is het aangepaste antwoord" of "Ik heb het verbeterd"). Reageer niet op de feedback zelf en begin direct met de eerste letter van de definitieve tekst.
-
-Pas daarnaast strikt de volgende opmaakregels toe:
-1. Gebruik Markdown hoofdkopjes (##) voor titels.
-2. Gebruik Markdown subkopjes (###) voor subtitels.
-3. Gebruik Markdown opsommingstekens (-) voor lijsten.
-4. Schrijf de tekst in natuurlijk Nederlands: gebruik UITSLUITEND een hoofdletter aan het begin van een zin of bij eigennamen. Elk woord in een titel met een hoofdletter schrijven (Title Case) is verboden.
-
-Vraag: ${prompt}
-
-Eerste antwoord: ${draft}
-
-Feedback: ${feedback}`;
-
-                const res3 = await fetch(claudeUrl, {
-                    method: "POST",
-                    headers: claudeHeaders,
-                    body: JSON.stringify({
-                        model: claudeModel,
-                        max_tokens: 2048,
-                        messages: [{ role: "user", content: striktePrompt }]
-                    }),
-                    signal: signal
-                });
-
-                if (!res3.ok) {
-                    const errClaude = await res3.json();
-                    let detailMessage = errClaude.error ? errClaude.error.message : 'Onbekende API fout';
-                    throw new Error(`Claude API fout: ${detailMessage}`);
-                }
-
-                const data3 = await res3.json();
-                const final = data3.content[0].text;
+                const final = await callClaude([{ role: "user", content: PROMPTS.STRIKTE_REWRITE(prompt, draft, feedback) }], signal);
 
                 loadingNode.remove();
 
                 const finaleStappen = [
-                    `<span class="workflow-done">✓</span> Claude heeft een aanzet gemaakt`,
-                    `<span class="workflow-done">✓</span> Gemini heeft gecontroleerd`,
-                    `<span class="workflow-done">✓</span> Claude heeft geoptimaliseerd`
+                    `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DRAFT} afgerond`,
+                    `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_CHECK} afgerond`,
+                    `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_OPTIMIZE} afgerond`
                 ];
 
                 const stepsDiv = appendMessage('steps', finaleStappen, false);
@@ -784,8 +785,7 @@ Feedback: ${feedback}`;
                 chats[chatIndex].messages.push({ role: 'ai', content: final });
                 localStorage.setItem('webbre_chats', JSON.stringify(chats));
                 
-                const query = document.getElementById('search-input').value;
-                if (query) { filterHistory(); } else { renderHistory(); }
+                updateHistoryDisplay();
 
             } catch (e) {
                 loadingNode.remove();
