@@ -7,22 +7,22 @@
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        /* Base layout & body background */
+        /* Base layout & body background - Lichtgroen voor het chatgedeelte */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             display: flex;
             height: 100vh;
-            background-color: #F4F7FA; 
+            background-color: #F4F9EB; 
         }
 
-        /* Sidebar */
+        /* Sidebar - Zeer zacht lichtblauw in de lijn van de primaire kleur */
         #sidebar {
             width: 260px;
             background-color: #EBF5FB; 
             box-shadow: 2px 0 10px rgba(0,0,0,0.03);
-            border-top: 5px solid #2094D0; 
-            border-right: 2px solid #E2E8F0; 
+            border-top: 5px solid #2094D0; /* Primaire Blauw uit logo */
+            border-right: 2px solid #E2E8F0; /* Duidelijke verticale scheiding */
             display: flex;
             flex-direction: column;
             padding: 15px;
@@ -30,7 +30,7 @@
             z-index: 10;
         }
 
-        /* New Chat Button */
+        /* New Chat Button - Het heldere groen uit het logo */
         .new-chat-btn {
             background: #98C93C; 
             color: white;
@@ -51,7 +51,7 @@
             box-shadow: 0 6px 8px rgba(152, 201, 60, 0.4);
         }
 
-        /* Zoekbalk Styling (NIEUW) */
+        /* Zoekbalk Styling */
         .search-container {
             margin-bottom: 15px;
             flex-shrink: 0;
@@ -235,7 +235,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Input area styling met Fade-Out overgang */
+        /* Input area styling met Fade-Out overgang - NIEUW: Teruggezet naar zachtgrijs/blauw */
         #input-container {
             padding: 10px 20px 20px 20px;
             background: #F4F7FA; 
@@ -243,7 +243,7 @@
             z-index: 10;
         }
 
-        /* De Fade-out Gradient */
+        /* De Fade-out Gradient - NIEUW: Fadet vloeiend van transparant naar de achtergrond van het invoerblok */
         #input-container::before {
             content: '';
             position: absolute;
@@ -331,7 +331,7 @@
             background-color: #990000;
         }
 
-        /* Settings modal styling */
+        /* Settings modal styling primary blue border & deep blue-grey header */
         #settings-modal {
             display: none;
             position: fixed;
@@ -466,20 +466,17 @@
             }
         }
 
-        // NIEUW: Functie om de geschiedenis te filteren op basis van zoekopdracht
         function filterHistory() {
             const query = document.getElementById('search-input').value.toLowerCase();
             
             if (!query) {
-                renderHistory(chats); // Als het zoekveld leeg is, laat alles zien
+                renderHistory(chats); 
                 return;
             }
 
             const filteredChats = chats.filter(chat => {
-                // Zoek in de titel
                 if (chat.title && chat.title.toLowerCase().includes(query)) return true;
                 
-                // Zoek diep in de content van de berichten (vragen en antwoorden)
                 if (chat.messages) {
                     for (let msg of chat.messages) {
                         if (typeof msg.content === 'string' && msg.content.toLowerCase().includes(query)) {
@@ -493,7 +490,6 @@
             renderHistory(filteredChats);
         }
 
-        // AANGEPAST: renderHistory accepteert nu een specifieke lijst met chats om weer te geven
         function renderHistory(chatsToRender = chats) {
             const list = document.getElementById('history-list');
             list.innerHTML = '';
@@ -523,7 +519,7 @@
 
         function startNewChat() {
             currentChatId = null;
-            document.getElementById('search-input').value = ''; // Maak zoekveld leeg bij nieuwe chat
+            document.getElementById('search-input').value = ''; 
             document.getElementById('chat-window').innerHTML = `
                 <div class="welcome-container">
                     <div class="welcome-title">Ewout's Optimum AI LLM</div>
@@ -541,7 +537,6 @@
             window.innerHTML = '';
             chat.messages.forEach(msg => appendMessage(msg.role, msg.content));
             
-            // Ververs de lijst zodat de actieve chat netjes wordt uitgelicht
             const query = document.getElementById('search-input').value;
             if (query) { filterHistory(); } else { renderHistory(); }
         }
@@ -741,7 +736,6 @@ Feedback: ${feedback}`;
                 chats[chatIndex].messages.push({ role: 'ai', content: final });
                 localStorage.setItem('webbre_chats', JSON.stringify(chats));
                 
-                // Controleer na het opslaan of de zoekbalk actief is
                 const query = document.getElementById('search-input').value;
                 if (query) { filterHistory(); } else { renderHistory(); }
 
