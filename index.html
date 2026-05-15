@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        /* Base layout & body background using very pale cool blue from kit */
+        /* Base layout & body background - Pale cool blue from kit */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -21,16 +21,16 @@
             width: 260px;
             background-color: #EDF2F7;
             border-right: 1px solid #E2E8F0;
-            border-top: 5px solid #85D6FF; /* Accent blue top border */
+            border-top: 5px solid #F6AD55; /* Orange accent top border from kit */
             display: flex;
             flex-direction: column;
             padding: 15px;
             overflow-y: auto;
         }
 
-        /* New Chat Button using main dynamic blue from kit */
+        /* New Chat Button - Purple for primary distinct action from kit */
         .new-chat-btn {
-            background: #1B6EF2; 
+            background: #6B46C1; 
             color: white;
             border: none;
             padding: 12px;
@@ -42,10 +42,10 @@
         }
 
         .new-chat-btn:hover {
-            background: #0056D6; /* Darker primary blue on hover */
+            background: #553C9A; /* Darker purple on hover */
         }
 
-        /* Date headers using deep blue-grey for main titles */
+        /* Date headers using deep blue-grey for titles */
         .date-header {
             font-size: 12px;
             color: #1A202C; 
@@ -70,7 +70,7 @@
         }
 
         .history-item:hover {
-            background-color: #E2E8F0; /* Subtle background grey on hover */
+            background-color: #E2E8F0; /* Subtle grey on hover */
         }
 
         /* Active history item using main primary blue */
@@ -80,13 +80,13 @@
             font-weight: bold;
         }
 
-        /* Main content area top accent */
+        /* Main content area top accent - Orange highlight from kit */
         #main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             position: relative;
-            border-top: 5px solid #85D6FF;
+            border-top: 5px solid #F6AD55;
         }
 
         #chat-window {
@@ -127,19 +127,19 @@
             font-size: 15px;
         }
 
-        /* User Message Bubble using main primary blue with white text */
+        /* User Message Bubble - Orange with deep grey text from kit */
         .user-message {
             align-self: flex-end;
-            background-color: #1B6EF2; 
-            color: white; 
+            background-color: #F6AD55; 
+            color: #1A202C; 
             font-weight: 500;
         }
 
-        /* AI Message Bubble using white background with dark text */
+        /* AI Message Bubble - White background with dark text */
         .ai-message {
             align-self: flex-start;
             background-color: white;
-            color: #1A202C; /* Deep blue-grey for text */
+            color: #1A202C; /* Deep blue-grey text */
             border: 1px solid #E2E8F0;
             border-left: 4px solid #1B6EF2; /* Accent left border primary blue */
         }
@@ -153,6 +153,20 @@
         .ai-message ul, .ai-message ol { margin: 5px 0 10px 0; padding-left: 20px; color: #2D3748;}
         .ai-message li { margin-bottom: 0px; }
 
+        /* Color Legend/Final Steps indicator under AI response */
+        .legend-steps {
+            align-self: flex-start;
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+            padding-left: 16px;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 10px; height: 10px; border-radius: 50%; }
+
         .error-message {
             align-self: flex-start;
             background-color: #fce4e4;
@@ -160,26 +174,33 @@
             border: 1px solid #cc0000;
         }
 
-        /* Loading & workflow steps subtle styling */
-        .loading-steps, .workflow-steps {
+        /* Loading steps - Subtle muted text */
+        .loading-steps {
             align-self: flex-start;
             background-color: transparent;
             padding: 5px 15px;
             font-size: 13px;
-            color: #718096; /* Muted muted text grey */
+            color: #718096; 
             display: flex;
             flex-direction: column;
             gap: 8px;
             font-style: italic;
         }
 
+        /* Workflow steps box - Purple distinct background from kit */
         .workflow-steps {
-            background-color: #EDF2F7; /* Sidebar nuance background */
-            border-left: 3px solid #85D6FF; /* Accent blue border */
+            align-self: flex-start;
+            background-color: #EDF2F7; /* Sidebar background for contrast */
+            border-left: 3px solid #9F7AEA; /* Purple accent left border */
             padding: 10px 15px;
             border-radius: 0 10px 10px 0;
             margin-bottom: -5px;
+            font-size: 13px;
+            color: #718096;
+            display: flex;
+            flex-direction: column;
             gap: 5px;
+            font-style: italic;
         }
         
         .loading-step, .workflow-step {
@@ -187,6 +208,9 @@
             align-items: center;
             gap: 10px;
         }
+
+        /* Done checkmark color - Green for success from kit */
+        .workflow-done { color: #38A169; }
 
         /* CSS Animation for the spinner using primary blue */
         .spinner {
@@ -236,7 +260,7 @@
             align-items: center;
         }
 
-        /* Link & status text grey */
+        /* Status text and link grey */
         .api-keys-link {
             font-size: 12px;
             color: #718096; 
@@ -261,7 +285,7 @@
             background-color: #0056D6; 
         }
 
-        /* Stop button using standard UX red regardless of blue theme */
+        /* Stop button using standard UX red */
         button.send-btn.stop-btn {
             background-color: #cc0000;
         }
@@ -294,7 +318,7 @@
             color: #2D3748;
         }
         
-        /* Save button in modal */
+        /* Save button in modal primary blue */
         #settings-modal button {
             background-color: #1B6EF2; 
             color: white; 
@@ -464,7 +488,8 @@
                 content.forEach(step => {
                     const stepDiv = document.createElement('div');
                     stepDiv.className = 'workflow-step';
-                    stepDiv.innerText = step;
+                    // We render completed steps with green success color from kit
+                    stepDiv.innerHTML = step;
                     div.appendChild(stepDiv);
                 });
             } else if (role === 'ai') {
@@ -563,7 +588,7 @@
 
                 // STAP 2: Gemini geeft feedback
                 loadingNode.innerHTML = `
-                    <div class="loading-step">✓ Claude heeft een aanzet gemaakt</div>
+                    <div class="loading-step"><span class="workflow-done">✓</span> Claude heeft een aanzet gemaakt</div>
                     <div class="loading-step"><div class="spinner"></div> Gemini controleert...</div>
                 `;
 
@@ -585,8 +610,8 @@
 
                 // STAP 3: Claude optimaliseert de finale versie
                 loadingNode.innerHTML = `
-                    <div class="loading-step">✓ Claude heeft een aanzet gemaakt</div>
-                    <div class="loading-step">✓ Gemini heeft gecontroleerd</div>
+                    <div class="loading-step"><span class="workflow-done">✓</span> Claude heeft een aanzet gemaakt</div>
+                    <div class="loading-step"><span class="workflow-done">✓</span> Gemini heeft gecontroleerd</div>
                     <div class="loading-step"><div class="spinner"></div> Claude optimaliseert...</div>
                 `;
 
@@ -627,14 +652,24 @@ Feedback: ${feedback}`;
                 loadingNode.remove();
 
                 const finaleStappen = [
-                    "✓ Claude heeft een aanzet gemaakt",
-                    "✓ Gemini heeft gecontroleerd",
-                    "✓ Claude heeft geoptimaliseerd"
+                    `<span class="workflow-done">✓</span> Claude heeft een aanzet gemaakt`,
+                    `<span class="workflow-done">✓</span> Gemini heeft gecontroleerd`,
+                    `<span class="workflow-done">✓</span> Claude heeft geoptimaliseerd`
                 ];
 
                 appendMessage('steps', finaleStappen);
-                appendMessage('ai', final);
+                const finalMsgDiv = appendMessage('ai', final);
                 
+                // We add the logical color legend here under the AI message
+                const legendDiv = document.createElement('div');
+                legendDiv.className = 'legend-steps';
+                legendDiv.innerHTML = `
+                    <div class="legend-item"><div class="legend-color" style="background-color: #6B46C1;"></div>Final Review</div>
+                    <div class="legend-item"><div class="legend-color" style="background-color: #38A169;"></div>Structured</div>
+                    <div class="legend-item"><div class="legend-color" style="background-color: #F6AD55;"></div>Gereed</div>
+                `;
+                finalMsgDiv.after(legendDiv);
+
                 const chatIndex = chats.findIndex(c => c.id === currentChatId);
                 chats[chatIndex].messages.push({ role: 'user', content: prompt });
                 chats[chatIndex].messages.push({ role: 'steps', content: finaleStappen });
