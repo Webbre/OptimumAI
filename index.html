@@ -580,11 +580,13 @@
             return div;
         }
 
-        // NIEUW: Achtergrondfunctie voor het genereren van een slimme titel via Gemini
+        // AANGEPAST: Striktere prompt instructie voor kleine letters
         async function generateChatTitle(promptText, chatId, geminiKey) {
             try {
                 const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${vastGeminiModel}:generateContent?key=${geminiKey}`;
-                const titelPrompt = `Bedenk een ultrakorte, logische titel (maximaal 2 tot 4 woorden) voor de volgende vraag. Geef UITSLUITEND de titel terug, zonder aanhalingstekens of extra uitleg.\n\nVraag: ${promptText}`;
+                
+                // Extra instructie toegevoegd over hoofdletters
+                const titelPrompt = `Bedenk een ultrakorte, logische titel (maximaal 2 tot 4 woorden) voor de volgende vraag. Geef UITSLUITEND de titel terug, zonder aanhalingstekens of extra uitleg. Regel voor opmaak: schrijf ALLEEN de eerste letter van de titel met een hoofdletter, de rest strikt in kleine letters (behalve eigennamen).\n\nVraag: ${promptText}`;
 
                 const res = await fetch(geminiUrl, {
                     method: "POST",
@@ -595,23 +597,19 @@
                 if (res.ok) {
                     const data = await res.json();
                     let nieuweTitel = data.candidates[0].content.parts[0].text.trim();
-                    // Verwijder ongewenste aanhalingstekens die het LLM soms toevoegt
                     nieuweTitel = nieuweTitel.replace(/^["']|["']$/g, '');
 
-                    // Update de chat in de opslag
                     const chatIndex = chats.findIndex(c => c.id === chatId);
                     if (chatIndex !== -1) {
                         chats[chatIndex].title = nieuweTitel;
                         localStorage.setItem('webbre_chats', JSON.stringify(chats));
                         
-                        // Ververs de zijbalk geruisloos
                         const query = document.getElementById('search-input').value;
                         if (query) { filterHistory(); } else { renderHistory(); }
                     }
                 }
             } catch (e) {
                 console.error("Fout bij het genereren van de slimme titel op de achtergrond:", e);
-                // Als het mislukt, laten we geruisloos de tijdelijke 25-karakter titel staan.
             }
         }
 
@@ -641,7 +639,6 @@
                 currentChatId = Date.now();
                 const vandaag = new Date().toLocaleDateString('nl-NL');
                 
-                // Tijdelijke titel zodat de interface direct reageert
                 const tijdelijkeTitel = prompt.substring(0, 25) + '...';
                 
                 chats.push({ 
@@ -651,7 +648,6 @@
                     messages: [] 
                 });
                 
-                // NIEUW: Start de asynchrone titel-generatie
                 generateChatTitle(prompt, currentChatId, geminiKey);
             }
 
