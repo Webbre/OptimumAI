@@ -127,7 +127,7 @@
             display: flex;
             flex-direction: column;
             gap: 20px; 
-            scroll-behavior: smooth; /* Zorgt voor zachte scroll-animaties */
+            scroll-behavior: smooth; 
         }
 
         /* Welcome text positioning & styling */
@@ -303,7 +303,7 @@
             color: #2094D0;
         }
 
-        /* Send button using primary blue */
+        /* Send button */
         button.send-btn {
             background-color: #2094D0; 
             color: white;
@@ -323,7 +323,7 @@
             transform: scale(0.97); 
         }
 
-        /* Stop button using standard UX red */
+        /* Stop button */
         button.send-btn.stop-btn {
             background-color: #cc0000;
         }
@@ -542,7 +542,6 @@
             if (query) { filterHistory(); } else { renderHistory(); }
         }
 
-        // De parameter autoScroll toegevoegd, standaard staat deze aan (true)
         function appendMessage(role, content, autoScroll = true) {
             const window = document.getElementById('chat-window');
             
@@ -574,12 +573,46 @@
             
             window.appendChild(div);
             
-            // Alleen direct naar het einde scrollen als we dat expliciet willen
             if (autoScroll) {
                 window.scrollTop = window.scrollHeight;
             }
             
             return div;
+        }
+
+        // NIEUW: Achtergrondfunctie voor het genereren van een slimme titel via Gemini
+        async function generateChatTitle(promptText, chatId, geminiKey) {
+            try {
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${vastGeminiModel}:generateContent?key=${geminiKey}`;
+                const titelPrompt = `Bedenk een ultrakorte, logische titel (maximaal 2 tot 4 woorden) voor de volgende vraag. Geef UITSLUITEND de titel terug, zonder aanhalingstekens of extra uitleg.\n\nVraag: ${promptText}`;
+
+                const res = await fetch(geminiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: titelPrompt }] }] })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    let nieuweTitel = data.candidates[0].content.parts[0].text.trim();
+                    // Verwijder ongewenste aanhalingstekens die het LLM soms toevoegt
+                    nieuweTitel = nieuweTitel.replace(/^["']|["']$/g, '');
+
+                    // Update de chat in de opslag
+                    const chatIndex = chats.findIndex(c => c.id === chatId);
+                    if (chatIndex !== -1) {
+                        chats[chatIndex].title = nieuweTitel;
+                        localStorage.setItem('webbre_chats', JSON.stringify(chats));
+                        
+                        // Ververs de zijbalk geruisloos
+                        const query = document.getElementById('search-input').value;
+                        if (query) { filterHistory(); } else { renderHistory(); }
+                    }
+                }
+            } catch (e) {
+                console.error("Fout bij het genereren van de slimme titel op de achtergrond:", e);
+                // Als het mislukt, laten we geruisloos de tijdelijke 25-karakter titel staan.
+            }
         }
 
         async function startWorkflow() {
@@ -607,12 +640,19 @@
             if (!currentChatId) {
                 currentChatId = Date.now();
                 const vandaag = new Date().toLocaleDateString('nl-NL');
+                
+                // Tijdelijke titel zodat de interface direct reageert
+                const tijdelijkeTitel = prompt.substring(0, 25) + '...';
+                
                 chats.push({ 
                     id: currentChatId, 
-                    title: prompt.substring(0, 25) + '...', 
+                    title: tijdelijkeTitel, 
                     date: vandaag,
                     messages: [] 
                 });
+                
+                // NIEUW: Start de asynchrone titel-generatie
+                generateChatTitle(prompt, currentChatId, geminiKey);
             }
 
             abortController = new AbortController();
@@ -734,11 +774,9 @@ Feedback: ${feedback}`;
                     `<span class="workflow-done">✓</span> Claude heeft geoptimaliseerd`
                 ];
 
-                // Let op: false toegevoegd zodat de pagina niet meer automatisch naar de bodem knalt
                 const stepsDiv = appendMessage('steps', finaleStappen, false);
                 const finalMsgDiv = appendMessage('ai', final, false);
 
-                // Scroll soepel naar de bovenkant van het nieuwe blok (inclusief de vinkjes)
                 chatWindow.scrollTo({
                     top: stepsDiv.offsetTop - 20,
                     behavior: 'smooth'
