@@ -303,7 +303,7 @@
             color: #2094D0;
         }
 
-        /* Send button using primary blue */
+        /* Send button */
         button.send-btn {
             background-color: #2094D0; 
             color: white;
@@ -323,7 +323,7 @@
             transform: scale(0.97); 
         }
 
-        /* Stop button using standard UX red */
+        /* Stop button */
         button.send-btn.stop-btn {
             background-color: #cc0000;
         }
@@ -374,6 +374,31 @@
         #settings-modal button:hover {
              background: #1A7BAE; 
         }
+
+        /* Toast Notifications */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .toast-error { background-color: #fce4e4; color: #cc0000; border: 1px solid #cc0000; }
+        .toast-success { background-color: #e6ffe6; color: #009900; border: 1px solid #009900; }
+        .toast-info { background-color: #EBF5FB; color: #2094D0; border: 1px solid #2094D0; }
         
     </style>
 </head>
@@ -383,7 +408,7 @@
         <button class="new-chat-btn" onclick="startNewChat()">+ Nieuw gesprek</button>
         
         <div class="search-container">
-            <input type="text" id="search-input" placeholder="Zoek in chats..." oninput="filterHistory()">
+            <input type="text" id="search-input" placeholder="Zoek in chats..." oninput="updateHistoryDisplay()">
         </div>
 
         <div id="history-list"></div>
@@ -420,8 +445,14 @@
     </div>
 
     <script>
-        // CONFIGURATIE EN GLOBALE VARIABELEN
-        const VAST_GEMINI_MODEL = 'gemini-2.5-flash'; 
+        // ==========================================
+        // --- MODULE: CONFIGURATIE & PROMPTS ---
+        // ==========================================
+        const CONFIG = {
+            VAST_GEMINI_MODEL: 'gemini-2.5-flash',
+            USE_PROXY: false, // Voorbereiding voor backend abstractie
+            PROXY_URL: ''
+        };
         
         const WORKFLOW_STEPS_TEXTS = {
             CLAUDE_DRAFT: 'Claude maakt een aanzet',
@@ -449,14 +480,80 @@ Eerste antwoord: ${draft}
 Feedback: ${feedback}`
         };
 
-        let chats = JSON.parse(localStorage.getItem('webbre_chats') || '[]');
+        // Globale statussen
         let currentChatId = null;
         let abortController = null;
 
-        // INITIALISATIE
-        window.onload = () => {
-            loadKeys();
-            renderHistory();
+        // ==========================================
+        // --- MODULE: UI & TOAST NOTIFICATIES ---
+        // ==========================================
+        function showToast(message, type = 'error', duration = 4000) {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerText = message;
+            
+            container.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => toast.style.opacity = '1', 10);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, duration);
+        }
+
+        // ==========================================
+        // --- MODULE: STORAGE SERVICE ---
+        // Abstractielaag: Hier wisselen we later makkelijk naar Firebase of Supabase
+        // ==========================================
+        const StorageService = {
+            async getChats() {
+                // Toekomst: await firestore.collection('chats').where('userId', '==', uid).get();
+                return JSON.parse(localStorage.getItem('webbre_chats') || '[]');
+            },
+            async saveAllChats(chats) {
+                try {
+                    localStorage.setItem('webbre_chats', JSON.stringify(chats));
+                } catch (e) {
+                    showToast('Lokale opslag vol. Verwijder oude chats om door te gaan.', 'error');
+                    console.error("Fout bij opslaan chats:", e);
+                }
+            },
+            async saveChat(chat) {
+                const chats = await this.getChats();
+                const index = chats.findIndex(c => c.id === chat.id);
+                
+                chat.updatedAt = Date.now(); // Update timestamp bij elke wijziging
+
+                if (index !== -1) {
+                    chats[index] = chat;
+                } else {
+                    chats.push(chat);
+                }
+                await this.saveAllChats(chats);
+            },
+            async getSetting(key) {
+                return localStorage.getItem(key);
+            },
+            async setSetting(key, value) {
+                localStorage.setItem(key, value);
+            }
+        };
+
+        // ==========================================
+        // --- MODULE: INITIALISATIE & INSTELLINGEN ---
+        // ==========================================
+        window.onload = async () => {
+            await loadKeys();
+            await updateHistoryDisplay();
             
             document.getElementById('userPrompt').addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -466,76 +563,65 @@ Feedback: ${feedback}`
             });
         };
 
-        // INSTELLINGEN BEHEER
-        function loadKeys() {
-            document.getElementById('geminiKey').value = localStorage.getItem('webbreGemini') || '';
-            document.getElementById('claudeKey').value = localStorage.getItem('webbreClaude') || '';
+        async function loadKeys() {
+            document.getElementById('geminiKey').value = (await StorageService.getSetting('webbreGemini')) || '';
+            document.getElementById('claudeKey').value = (await StorageService.getSetting('webbreClaude')) || '';
             
-            let opgeslagenClaudeModel = localStorage.getItem('webbreClaudeModel');
+            let opgeslagenClaudeModel = await StorageService.getSetting('webbreClaudeModel');
             if (!opgeslagenClaudeModel || opgeslagenClaudeModel.includes('haiku') || opgeslagenClaudeModel.includes('sonnet') || opgeslagenClaudeModel.includes('3-')) {
                 opgeslagenClaudeModel = 'claude-opus-4-7'; 
-                localStorage.setItem('webbreClaudeModel', opgeslagenClaudeModel);
+                await StorageService.setSetting('webbreClaudeModel', opgeslagenClaudeModel);
             }
             document.getElementById('claudeModel').value = opgeslagenClaudeModel;
         }
 
-        function toggleSettings() {
+        async function toggleSettings() {
             const modal = document.getElementById('settings-modal');
             if (modal.style.display === 'block') {
                 const gKey = document.getElementById('geminiKey').value.trim();
                 const cKey = document.getElementById('claudeKey').value.trim();
                 const cModel = document.getElementById('claudeModel').value.trim();
                 
-                localStorage.setItem('webbreGemini', gKey);
-                localStorage.setItem('webbreClaude', cKey);
-                localStorage.setItem('webbreClaudeModel', cModel);
+                await StorageService.setSetting('webbreGemini', gKey);
+                await StorageService.setSetting('webbreClaude', cKey);
+                await StorageService.setSetting('webbreClaudeModel', cModel);
                 
                 modal.style.display = 'none';
+                showToast('Instellingen succesvol opgeslagen', 'success');
             } else {
                 modal.style.display = 'block';
             }
         }
 
-        // CHAT HISTORIE FUNCTIES
-        function updateHistoryDisplay() {
-            const query = document.getElementById('search-input').value.trim();
-            if (query) {
-                filterHistory();
-            } else {
-                renderHistory();
-            }
-        }
-
-        function filterHistory() {
-            const query = document.getElementById('search-input').value.toLowerCase();
+        // ==========================================
+        // --- MODULE: HISTORY / ZIJBALK ---
+        // ==========================================
+        async function updateHistoryDisplay() {
+            const chats = await StorageService.getChats();
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
             
-            if (!query) {
-                renderHistory(chats); 
-                return;
-            }
-
-            const filteredChats = chats.filter(chat => {
-                if (chat.title && chat.title.toLowerCase().includes(query)) return true;
-                
-                if (chat.messages) {
-                    for (let msg of chat.messages) {
-                        if (typeof msg.content === 'string' && msg.content.toLowerCase().includes(query)) {
-                            return true;
-                        }
+            let filteredChats = chats;
+            
+            if (query) {
+                filteredChats = chats.filter(chat => {
+                    if (chat.title && chat.title.toLowerCase().includes(query)) return true;
+                    if (chat.messages) {
+                        return chat.messages.some(msg => typeof msg.content === 'string' && msg.content.toLowerCase().includes(query));
                     }
-                }
-                return false;
-            });
+                    return false;
+                });
+            }
 
             renderHistory(filteredChats);
         }
 
-        function renderHistory(chatsToRender = chats) {
+        function renderHistory(chatsToRender) {
             const list = document.getElementById('history-list');
             list.innerHTML = '';
             
             const grouped = {};
-            chatsToRender.slice().reverse().forEach(chat => {
+            // Sorteer op updatedAt indien mogelijk, fallback naar ID
+            chatsToRender.slice().sort((a,b) => (a.createdAt || a.id) - (b.createdAt || b.id)).reverse().forEach(chat => {
                 const dateKey = chat.date || 'Onbekende datum';
                 if (!grouped[dateKey]) grouped[dateKey] = [];
                 grouped[dateKey].push(chat);
@@ -557,7 +643,7 @@ Feedback: ${feedback}`
             }
         }
 
-        function startNewChat() {
+        async function startNewChat() {
             currentChatId = null;
             document.getElementById('search-input').value = ''; 
             document.getElementById('chat-window').innerHTML = `
@@ -567,26 +653,109 @@ Feedback: ${feedback}`
                 </div>
             `;
             document.getElementById('userPrompt').value = '';
-            renderHistory();
+            await updateHistoryDisplay();
         }
 
-        function loadChat(id) {
+        async function loadChat(id) {
             currentChatId = id;
+            const chats = await StorageService.getChats();
             const chat = chats.find(c => c.id === id);
+            
             const window = document.getElementById('chat-window');
             window.innerHTML = '';
-            chat.messages.forEach(msg => appendMessage(msg.role, msg.content));
-            updateHistoryDisplay();
+            
+            if (chat && chat.messages) {
+                chat.messages.forEach(msg => appendMessage(msg.role, msg.content, false));
+                window.scrollTop = window.scrollHeight; // Scroll naar bodem bij inladen oude chat
+            }
+            
+            await updateHistoryDisplay();
         }
 
-        // CHAT INTERFACE UPDATES
+        // ==========================================
+        // --- MODULE: API HELPERS ---
+        // ==========================================
+        async function callClaude(messages, signal) {
+            const claudeKey = (await StorageService.getSetting('webbreClaude') || '').trim();
+            const claudeModel = (await StorageService.getSetting('webbreClaudeModel') || 'claude-opus-4-7').trim();
+
+            if (CONFIG.USE_PROXY) {
+                // Toekomstige proxy afhandeling
+            } else {
+                const res = await fetch("https://api.anthropic.com/v1/messages", {
+                    method: "POST",
+                    headers: {
+                        "x-api-key": claudeKey,
+                        "anthropic-version": "2023-06-01",
+                        "content-type": "application/json",
+                        "anthropic-dangerous-direct-browser-access": "true"
+                    },
+                    body: JSON.stringify({
+                        model: claudeModel,
+                        max_tokens: 4096,
+                        messages: messages
+                    }),
+                    signal: signal
+                });
+
+                if (!res.ok) {
+                    let errBody;
+                    try { errBody = await res.json(); } catch(e) { errBody = {}; }
+                    const errorMessage = errBody.error?.message || 'Onbekende fout';
+
+                    if (res.status === 401 || res.status === 403) throw new Error('Claude API-key ongeldig of permissies onvoldoende.');
+                    if (res.status === 429) throw new Error('Claude rate-limit bereikt. Wacht even.');
+                    if (res.status >= 500) throw new Error(`Claude server-probleem (${res.status}).`);
+                    
+                    throw new Error(`Claude API-fout: ${errorMessage}`);
+                }
+
+                const data = await res.json();
+                const contentText = data.content?.[0]?.text;
+                if (!contentText) throw new Error('Claude gaf een leeg of onverwacht antwoord terug.');
+                return contentText;
+            }
+        }
+
+        async function callGemini(promptText, signal = null) {
+            const geminiKey = (await StorageService.getSetting('webbreGemini') || '').trim();
+            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.VAST_GEMINI_MODEL}:generateContent?key=${geminiKey}`;
+
+            const res = await fetch(geminiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
+                signal: signal
+            });
+
+            if (!res.ok) {
+                let errBody;
+                try { errBody = await res.json(); } catch(e) { errBody = {}; }
+                throw new Error(`Google API fout: ${errBody.error?.message || 'Onbekende fout'}`);
+            }
+
+            const data = await res.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            
+            // Safety Block Preventie via Optional Chaining
+            if (!text) {
+                if (data.promptFeedback?.blockReason) {
+                    throw new Error(`Gemini weigert de prompt i.v.m. de veiligheidsfilters. Reden: ${data.promptFeedback.blockReason}`);
+                }
+                throw new Error('Gemini gaf een leeg antwoord terug (mogelijk veiligheidsfilter).');
+            }
+            
+            return text;
+        }
+
+        // ==========================================
+        // --- MODULE: WORKFLOW & BERICHTEN ---
+        // ==========================================
         function appendMessage(role, content, autoScroll = true) {
             const window = document.getElementById('chat-window');
             
             const welcome = window.querySelector('.welcome-container');
-            if (welcome) {
-                welcome.remove();
-            }
+            if (welcome) welcome.remove();
 
             const div = document.createElement('div');
             
@@ -618,78 +787,24 @@ Feedback: ${feedback}`
             return div;
         }
 
-        // API HELPER FUNCTIES
-        async function callClaude(messages, signal) {
-            const claudeKey = (localStorage.getItem('webbreClaude') || '').trim();
-            const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-opus-4-7').trim();
-
-            const claudeUrl = "https://api.anthropic.com/v1/messages";
-            const claudeHeaders = {
-                "x-api-key": claudeKey,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-                "anthropic-dangerous-direct-browser-access": "true"
-            };
-
-            const res = await fetch(claudeUrl, {
-                method: "POST",
-                headers: claudeHeaders,
-                body: JSON.stringify({
-                    model: claudeModel,
-                    max_tokens: 4096, // VERHOOGD NAAR 4096 VOOR LANGE REVIEWS
-                    messages: messages
-                }),
-                signal: signal
-            });
-
-            if (!res.ok) {
-                const errClaude = await res.json();
-                let detailMessage = errClaude.error ? errClaude.error.message : 'Onbekende API fout';
-                throw new Error(`Claude API fout: ${detailMessage}`);
-            }
-
-            const data = await res.json();
-            return data.content[0].text;
-        }
-
-        async function callGemini(promptText, signal = null) {
-            const geminiKey = (localStorage.getItem('webbreGemini') || '').trim();
-            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${VAST_GEMINI_MODEL}:generateContent?key=${geminiKey}`;
-
-            const res = await fetch(geminiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
-                signal: signal
-            });
-
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(`Google API fout: ${errData.error?.message || 'Onbekende fout'}`);
-            }
-
-            const data = await res.json();
-            return data.candidates[0].content.parts[0].text;
-        }
-
-        // ACHTERGRONDTAKEN
         async function generateChatTitle(promptText, chatId) {
             try {
                 let nieuweTitel = await callGemini(PROMPTS.TITEL(promptText));
                 nieuweTitel = nieuweTitel.trim().replace(/^["']|["']$/g, '');
 
+                const chats = await StorageService.getChats();
                 const chatIndex = chats.findIndex(c => c.id === chatId);
+                
                 if (chatIndex !== -1) {
                     chats[chatIndex].title = nieuweTitel;
-                    localStorage.setItem('webbre_chats', JSON.stringify(chats));
-                    updateHistoryDisplay();
+                    await StorageService.saveChat(chats[chatIndex]);
+                    await updateHistoryDisplay();
                 }
             } catch (e) {
                 console.error("Fout bij het genereren van de slimme titel op de achtergrond:", e);
             }
         }
 
-        // HOOFD WORKFLOW
         async function startWorkflow() {
             const sendBtn = document.getElementById('sendBtn');
             const userPromptElement = document.getElementById('userPrompt');
@@ -700,30 +815,33 @@ Feedback: ${feedback}`
             }
 
             const prompt = userPromptElement.value.trim();
-            const geminiKey = (localStorage.getItem('webbreGemini') || '').trim();
-            const claudeKey = (localStorage.getItem('webbreClaude') || '').trim();
+            const geminiKey = (await StorageService.getSetting('webbreGemini') || '').trim();
+            const claudeKey = (await StorageService.getSetting('webbreClaude') || '').trim();
             const chatWindow = document.getElementById('chat-window');
 
             if (!prompt) return;
 
             if (!geminiKey || !claudeKey) {
-                alert("Zorg dat je beide API keys in de instellingen hebt opgeslagen.");
+                showToast("Zorg dat je beide API keys in de instellingen hebt opgeslagen.", "error");
                 return;
             }
 
+            // Nieuwe Chat Structuur (Cloud Ready)
             if (!currentChatId) {
                 currentChatId = Date.now();
                 const vandaag = new Date().toLocaleDateString('nl-NL');
                 
-                const tijdelijkeTitel = prompt.substring(0, 25) + '...';
-                
-                chats.push({ 
+                const nieuweChat = { 
                     id: currentChatId, 
-                    title: tijdelijkeTitel, 
+                    userId: null, // Voor later bij Auth
+                    title: prompt.substring(0, 25) + '...', 
                     date: vandaag,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
                     messages: [] 
-                });
+                };
                 
+                await StorageService.saveChat(nieuweChat);
                 generateChatTitle(prompt, currentChatId);
             }
 
@@ -779,22 +897,31 @@ Feedback: ${feedback}`
                     behavior: 'smooth'
                 });
 
+                // Chat ophalen en netjes updaten via de Service
+                const chats = await StorageService.getChats();
                 const chatIndex = chats.findIndex(c => c.id === currentChatId);
-                chats[chatIndex].messages.push({ role: 'user', content: prompt });
-                chats[chatIndex].messages.push({ role: 'steps', content: finaleStappen });
-                chats[chatIndex].messages.push({ role: 'ai', content: final });
-                localStorage.setItem('webbre_chats', JSON.stringify(chats));
                 
-                updateHistoryDisplay();
+                if (chatIndex !== -1) {
+                    chats[chatIndex].messages.push({ role: 'user', content: prompt });
+                    chats[chatIndex].messages.push({ role: 'steps', content: finaleStappen });
+                    chats[chatIndex].messages.push({ role: 'ai', content: final });
+                    await StorageService.saveChat(chats[chatIndex]);
+                }
+                
+                await updateHistoryDisplay();
 
             } catch (e) {
                 loadingNode.remove();
                 
                 if (e.name === 'AbortError') {
-                    appendMessage('error', 'Generatie gestopt. De prompt is teruggeplaatst in het tekstvak.');
+                    showToast('Generatie gestopt. De prompt is teruggeplaatst.', 'info');
                     userPromptElement.value = originalPrompt;
+                } else if (e instanceof TypeError && e.message === 'Failed to fetch') {
+                     showToast('Geen internetverbinding of de API is niet bereikbaar.', 'error');
+                     appendMessage('error', 'Geen internetverbinding of de API is onbereikbaar.');
                 } else {
                     console.error(e);
+                    showToast(e.message, 'error');
                     appendMessage('error', `Fout: ${e.message}`);
                 }
             } finally {
