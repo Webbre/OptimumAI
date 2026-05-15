@@ -303,7 +303,7 @@
             color: #2094D0;
         }
 
-        /* Send button */
+        /* Send button using primary blue */
         button.send-btn {
             background-color: #2094D0; 
             color: white;
@@ -323,7 +323,7 @@
             transform: scale(0.97); 
         }
 
-        /* Stop button */
+        /* Stop button using standard UX red */
         button.send-btn.stop-btn {
             background-color: #cc0000;
         }
@@ -636,7 +636,7 @@ Feedback: ${feedback}`
                 headers: claudeHeaders,
                 body: JSON.stringify({
                     model: claudeModel,
-                    max_tokens: 2048,
+                    max_tokens: 4096, // VERHOOGD NAAR 4096 VOOR LANGE REVIEWS
                     messages: messages
                 }),
                 signal: signal
