@@ -7,29 +7,30 @@
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        /* Basisstijl en layout */
+        /* Base layout & body background using very pale cool blue from kit */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             display: flex;
             height: 100vh;
-            background-color: #faf9f6;
+            background-color: #F4F8FC; 
         }
 
-        /* Zijbalk in lichte tint met gele accentrand */
+        /* Sidebar using a slightly darker nuance of the background blue */
         #sidebar {
             width: 260px;
-            background-color: #fdfcfb;
-            border-right: 1px solid #e8e6e1;
-            border-top: 5px solid #f0b516;
+            background-color: #EDF2F7;
+            border-right: 1px solid #E2E8F0;
+            border-top: 5px solid #85D6FF; /* Accent blue top border */
             display: flex;
             flex-direction: column;
             padding: 15px;
             overflow-y: auto;
         }
 
+        /* New Chat Button using main dynamic blue from kit */
         .new-chat-btn {
-            background: #8e1f2f;
+            background: #1B6EF2; 
             color: white;
             border: none;
             padding: 12px;
@@ -41,12 +42,13 @@
         }
 
         .new-chat-btn:hover {
-            background: #7a1a28;
+            background: #0056D6; /* Darker primary blue on hover */
         }
 
+        /* Date headers using deep blue-grey for main titles */
         .date-header {
             font-size: 12px;
-            color: #8e1f2f;
+            color: #1A202C; 
             margin-top: 15px;
             margin-bottom: 5px;
             font-weight: bold;
@@ -54,6 +56,7 @@
             padding-left: 5px;
         }
 
+        /* History items with subtle text from kit */
         .history-item {
             padding: 10px;
             margin-bottom: 5px;
@@ -63,26 +66,27 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: #333;
+            color: #2D3748; /* Secondary text dark grey */
         }
 
         .history-item:hover {
-            background-color: #f4f0e6;
+            background-color: #E2E8F0; /* Subtle background grey on hover */
         }
 
+        /* Active history item using main primary blue */
         .history-item.active {
-            background-color: #8e1f2f;
+            background-color: #1B6EF2;
             color: white;
             font-weight: bold;
         }
 
-        /* Hoofdscherm chat */
+        /* Main content area top accent */
         #main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             position: relative;
-            border-top: 5px solid #f0b516;
+            border-top: 5px solid #85D6FF;
         }
 
         #chat-window {
@@ -94,23 +98,23 @@
             gap: 15px;
         }
 
-        /* Nieuwe welkomstboodschap styling - verplaatst naar boven */
+        /* Welcome text positioning & styling */
         .welcome-container {
-            margin: 6vh auto auto auto; /* Zorgt dat het bovenaan centreert i.p.v. het exacte midden */
+            margin: 6vh auto auto auto; 
             text-align: center;
             padding: 20px;
             max-width: 600px;
         }
 
         .welcome-title {
-            color: #8e1f2f;
+            color: #1A202C; /* Deep blue-grey for title */
             font-size: 32px;
             font-weight: bold;
             margin-bottom: 10px;
         }
 
         .welcome-subtitle {
-            color: #5f6368;
+            color: #718096; /* Muted subtitle grey */
             font-size: 16px;
             line-height: 1.5;
         }
@@ -123,28 +127,30 @@
             font-size: 15px;
         }
 
+        /* User Message Bubble using main primary blue with white text */
         .user-message {
             align-self: flex-end;
-            background-color: #f0b516; 
-            color: #8e1f2f; 
+            background-color: #1B6EF2; 
+            color: white; 
             font-weight: 500;
         }
 
+        /* AI Message Bubble using white background with dark text */
         .ai-message {
             align-self: flex-start;
             background-color: white;
-            color: #1f1f1f;
-            border: 1px solid #e8e6e1;
-            border-left: 4px solid #8e1f2f;
+            color: #1A202C; /* Deep blue-grey for text */
+            border: 1px solid #E2E8F0;
+            border-left: 4px solid #1B6EF2; /* Accent left border primary blue */
         }
 
-        /* Markdown styling */
+        /* Markdown styling within AI messages */
         .ai-message p { margin: 0 0 10px 0; }
         .ai-message p:last-child { margin-bottom: 0; }
-        .ai-message h1, .ai-message h2 { font-size: 15px; font-weight: bold; margin: 15px 0 5px 0; }
-        .ai-message h3, .ai-message h4 { font-size: 15px; font-weight: normal; text-decoration: underline; margin: 15px 0 5px 0; }
+        .ai-message h1, .ai-message h2 { font-size: 15px; font-weight: bold; margin: 15px 0 5px 0; color: #1A202C; }
+        .ai-message h3, .ai-message h4 { font-size: 15px; font-weight: normal; text-decoration: underline; margin: 15px 0 5px 0; color: #1A202C; }
         .ai-message h1:first-child, .ai-message h2:first-child, .ai-message h3:first-child { margin-top: 0; }
-        .ai-message ul, .ai-message ol { margin: 5px 0 10px 0; padding-left: 20px; }
+        .ai-message ul, .ai-message ol { margin: 5px 0 10px 0; padding-left: 20px; color: #2D3748;}
         .ai-message li { margin-bottom: 0px; }
 
         .error-message {
@@ -154,13 +160,13 @@
             border: 1px solid #cc0000;
         }
 
-        /* Styling voor het tijdelijke laadscherm */
+        /* Loading & workflow steps subtle styling */
         .loading-steps, .workflow-steps {
             align-self: flex-start;
             background-color: transparent;
             padding: 5px 15px;
             font-size: 13px;
-            color: #5f6368;
+            color: #718096; /* Muted muted text grey */
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -168,8 +174,8 @@
         }
 
         .workflow-steps {
-            background-color: #fdfcfb;
-            border-left: 3px solid #f0b516;
+            background-color: #EDF2F7; /* Sidebar nuance background */
+            border-left: 3px solid #85D6FF; /* Accent blue border */
             padding: 10px 15px;
             border-radius: 0 10px 10px 0;
             margin-bottom: -5px;
@@ -182,10 +188,10 @@
             gap: 10px;
         }
 
-        /* CSS Animatie voor de spinner */
+        /* CSS Animation for the spinner using primary blue */
         .spinner {
-            border: 2px solid #e8e6e1;
-            border-top: 2px solid #8e1f2f;
+            border: 2px solid #E2E8F0;
+            border-top: 2px solid #1B6EF2; 
             border-radius: 50%;
             width: 12px;
             height: 12px;
@@ -198,11 +204,11 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Input area onderaan */
+        /* Input area styling */
         #input-container {
             padding: 20px;
             background: white;
-            border-top: 1px solid #e8e6e1;
+            border-top: 1px solid #E2E8F0;
         }
 
         .input-wrapper {
@@ -216,11 +222,12 @@
         textarea {
             width: 100%;
             padding: 15px;
-            border: 1px solid #ccc;
+            border: 1px solid #E2E8F0;
             border-radius: 12px;
             resize: none;
             font-size: 16px;
             box-sizing: border-box;
+            color: #2D3748;
         }
 
         .controls {
@@ -229,16 +236,18 @@
             align-items: center;
         }
 
+        /* Link & status text grey */
         .api-keys-link {
             font-size: 12px;
-            color: #8e1f2f;
+            color: #718096; 
             text-decoration: underline;
             cursor: pointer;
             font-weight: bold;
         }
 
+        /* Send button using primary blue */
         button.send-btn {
-            background-color: #8e1f2f;
+            background-color: #1B6EF2; 
             color: white;
             border: none;
             padding: 10px 24px;
@@ -249,9 +258,10 @@
         }
 
         button.send-btn:hover {
-            background-color: #7a1a28;
+            background-color: #0056D6; 
         }
 
+        /* Stop button using standard UX red regardless of blue theme */
         button.send-btn.stop-btn {
             background-color: #cc0000;
         }
@@ -260,7 +270,7 @@
             background-color: #990000;
         }
 
-        /* Instellingen scherm */
+        /* Settings modal styling primary blue border & deep blue-grey header */
         #settings-modal {
             display: none;
             position: fixed;
@@ -272,9 +282,35 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 1000;
             border-radius: 12px;
-            border: 2px solid #8e1f2f;
+            border: 2px solid #1B6EF2; 
             width: 320px;
         }
+
+        #settings-modal h3 {
+            color: #1A202C; 
+        }
+
+        #settings-modal input {
+            color: #2D3748;
+        }
+        
+        /* Save button in modal */
+        #settings-modal button {
+            background-color: #1B6EF2; 
+            color: white; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            width: 100%;
+            transition: background 0.3s;
+        }
+        
+        #settings-modal button:hover {
+             background: #0056D6; 
+        }
+        
     </style>
 </head>
 <body>
@@ -304,14 +340,14 @@
     </div>
 
     <div id="settings-modal">
-        <h3 style="color: #8e1f2f;">Instellingen</h3>
+        <h3>Instellingen</h3>
         <label style="font-size: 12px; font-weight: bold;">Gemini API Key:</label>
         <input type="password" id="geminiKey" style="width:100%; margin-bottom:10px; padding:8px; box-sizing:border-box;">
         <label style="font-size: 12px; font-weight: bold;">Claude API Key:</label>
         <input type="password" id="claudeKey" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
         <label style="font-size: 12px; font-weight: bold;">Claude Model:</label>
         <input type="text" id="claudeModel" placeholder="Bijv. claude-opus-4-7" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
-        <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">Sluiten en opslaan</button>
+        <button onclick="toggleSettings()" >Sluiten en opslaan</button>
     </div>
 
     <script>
@@ -620,6 +656,8 @@ Feedback: ${feedback}`;
                 abortController = null;
                 sendBtn.innerText = 'Verstuur';
                 sendBtn.classList.remove('stop-btn');
+                // Herschrijf enabled kleur naar nieuwe blauwe primaire kleur
+                sendBtn.style.backgroundColor = "#1B6EF2"; 
             }
         }
     </script>
