@@ -45,97 +45,30 @@
             flex-shrink: 0;
         }
 
-        .new-chat-btn:hover {
-            background: #85B334; 
-            transform: translateY(-1px);
-        }
+        .new-chat-btn:hover { background: #85B334; transform: translateY(-1px); }
 
         /* Zoekbalk */
-        .search-container {
-            margin-bottom: 15px;
-            flex-shrink: 0;
-        }
-
-        #search-input {
-            width: 100%;
-            padding: 10px 15px;
-            border: 1px solid #CBD5E0;
-            border-radius: 20px;
-            font-size: 13px;
-            box-sizing: border-box;
-            background-color: white;
-        }
-
-        #search-input:focus {
-            outline: none;
-            border-color: #2094D0;
-            box-shadow: 0 0 0 2px rgba(32, 148, 208, 0.15);
-        }
+        .search-container { margin-bottom: 15px; flex-shrink: 0; }
+        #search-input { width: 100%; padding: 10px 15px; border: 1px solid #CBD5E0; border-radius: 20px; font-size: 13px; box-sizing: border-box; background-color: white; }
+        #search-input:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 2px rgba(32, 148, 208, 0.15); }
 
         /* Chat Window & Berichten */
-        #main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            border-top: 5px solid #2094D0;
-        }
+        #main-content { flex: 1; display: flex; flex-direction: column; position: relative; border-top: 5px solid #2094D0; }
+        #chat-window { flex: 1; padding: 20px 20px 100px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
 
-        #chat-window {
-            flex: 1;
-            padding: 20px 20px 100px 20px; 
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px; 
-            scroll-behavior: smooth; 
-        }
-
-        .welcome-container {
-            margin: 6vh 0 0 0; 
-            text-align: left;
-            max-width: 800px;
-        }
-
+        .welcome-container { margin: 6vh 0 0 0; text-align: left; max-width: 800px; }
         .welcome-title { color: #2094D0; font-size: 32px; font-weight: bold; margin-bottom: 10px; }
         .welcome-subtitle { color: #4A5568; font-size: 16px; line-height: 1.5; }
 
         .message {
-            max-width: 80%;
-            padding: 16px 20px;
-            border-radius: 12px;
-            line-height: 1.6;
-            font-size: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            /* Voorkom dat tekst uit het kader loopt */
-            overflow-wrap: break-word;
-            word-wrap: break-word;
-            hyphens: auto;
+            max-width: 80%; padding: 16px 20px; border-radius: 12px; line-height: 1.6; font-size: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-wrap: break-word; word-wrap: break-word; hyphens: auto;
         }
 
-        /* Code blokken binnen berichten netjes houden */
-        .message pre {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 6px;
-            overflow-x: auto;
-            border: 1px solid #e2e8f0;
-        }
+        .message pre { background: #f8f9fa; padding: 10px; border-radius: 6px; overflow-x: auto; border: 1px solid #e2e8f0; }
 
-        .user-message {
-            align-self: flex-end;
-            background-color: #2094D0; 
-            color: white; 
-            border-bottom-right-radius: 4px;
-        }
-
-        .ai-message {
-            align-self: flex-start;
-            background-color: white;
-            color: #1A202C; 
-            border-left: 5px solid #2094D0;
-            border-bottom-left-radius: 4px;
-        }
+        .user-message { align-self: flex-end; background-color: #2094D0; color: white; border-bottom-right-radius: 4px; }
+        .ai-message { align-self: flex-start; background-color: white; color: #1A202C; border-left: 5px solid #2094D0; border-bottom-left-radius: 4px; }
 
         /* Markdown styling within AI messages */
         .ai-message p { margin: 0 0 10px 0; }
@@ -146,67 +79,40 @@
         .ai-message ul, .ai-message ol { margin: 5px 0 10px 0; padding-left: 20px; color: #2D3748;}
         .ai-message li { margin-bottom: 4px; }
 
-        .error-message {
-            align-self: flex-start;
-            background-color: #fce4e4;
-            color: #cc0000;
-            border: 1px solid #cc0000;
-        }
+        .error-message { align-self: flex-start; background-color: #fce4e4; color: #cc0000; border: 1px solid #cc0000; }
 
         /* Workflow steps box */
         .workflow-steps {
-            align-self: flex-start;
-            background-color: white;
-            border: 1px solid #E2E8F0;
-            border-left: 3px solid #98C93C; 
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #718096;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            font-style: italic;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            align-self: flex-start; background-color: white; border: 1px solid #E2E8F0; border-left: 3px solid #98C93C; 
+            padding: 12px 16px; border-radius: 8px; font-size: 13px; color: #718096; display: flex; flex-direction: column;
+            gap: 6px; font-style: italic; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         
-        .loading-step, .workflow-step {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
+        .loading-step, .workflow-step { display: flex; align-items: center; gap: 10px; }
         .workflow-done { color: #98C93C; font-weight: bold; font-style: normal; }
 
         .spinner {
-            border: 2px solid #E2E8F0;
-            border-top: 2px solid #2094D0; 
-            border-radius: 50%;
-            width: 12px;
-            height: 12px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
+            border: 2px solid #E2E8F0; border-top: 2px solid #2094D0; border-radius: 50%; width: 12px; height: 12px;
+            animation: spin 1s linear infinite; display: inline-block;
         }
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* Input area */
-        #input-container {
-            padding: 10px 20px 20px 20px;
-            background: #F4F9EB; 
-            position: relative;
-            z-index: 10;
-        }
-
+        #input-container { padding: 10px 20px 20px 20px; background: #F4F9EB; position: relative; z-index: 10; }
         #input-container::before {
-            content: '';
-            position: absolute;
-            top: -100px; left: 0; right: 0; height: 100px; 
-            background: linear-gradient(to bottom, rgba(244,249,235,0) 0%, rgba(244,249,235,1) 100%);
-            pointer-events: none; 
+            content: ''; position: absolute; top: -100px; left: 0; right: 0; height: 100px; 
+            background: linear-gradient(to bottom, rgba(244,249,235,0) 0%, rgba(244,249,235,1) 100%); pointer-events: none; 
         }
 
-        .input-wrapper { max-width: 80%; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+        .input-wrapper { max-width: 80%; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+
+        /* Categorie Selector */
+        .category-select {
+            padding: 8px 12px; border: 1px solid #CBD5E0; border-radius: 8px; background-color: white;
+            color: #4A5568; font-size: 13px; font-weight: bold; cursor: pointer; outline: none; width: fit-content;
+        }
+        .category-select:focus { border-color: #2094D0; }
 
         textarea {
             width: 100%; padding: 15px; background-color: white; border: 2px solid #E2E8F0; border-radius: 12px;
@@ -226,8 +132,8 @@
         .send-btn:hover { background-color: #1A7BAE; }
         .stop-btn { background-color: #cc0000 !important; }
 
-        /* History & Date Headers */
-        .date-header { font-size: 12px; color: #2094D0; margin-top: 15px; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; padding-left: 5px; }
+        /* History & Headers */
+        .category-header { font-size: 12px; color: #2094D0; margin-top: 15px; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; padding-left: 5px; }
         
         .history-item { 
             padding: 10px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; 
@@ -237,9 +143,7 @@
         .history-item:hover { background-color: #DDEBF4; }
         .history-item.active { background-color: #2094D0; color: white; font-weight: bold; }
         
-        .chat-title-text {
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; margin-right: 5px;
-        }
+        .chat-title-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; margin-right: 5px; }
 
         .pin-btn {
             background: transparent; border: none; cursor: pointer; opacity: 0; 
@@ -278,7 +182,11 @@
         <div id="chat-window"></div>
         <div id="input-container">
             <div class="input-wrapper">
-                <textarea id="userPrompt" rows="6" placeholder="Stel een vraag..."></textarea>
+                <select id="chatCategory" class="category-select">
+                    <option value="Werk & School">💼 Werk & School</option>
+                    <option value="Privé">🏠 Privé</option>
+                </select>
+                <textarea id="userPrompt" rows="6" placeholder="Stel een vraag... (Shift + Enter voor een nieuwe regel)"></textarea>
                 <div class="controls">
                     <span class="api-keys-link" onclick="toggleSettings()">Instellingen (API & modellen)</span>
                     <button class="send-btn" id="sendBtn" onclick="startWorkflow()">Verstuur</button>
@@ -316,7 +224,6 @@
     </div>
 
     <script>
-        // --- MODULE: CONFIGURATIE ---
         const CONFIG = { OUTPUT_TOKENS: 4096 };
         
         const WORKFLOW_STEPS_TEXTS = {
@@ -329,19 +236,16 @@
             TITEL: (promptText) => `Je bent een AI die uitsluitend titels genereert. Bedenk een ultrakorte titel (maximaal 2 tot 4 woorden) voor de onderstaande vraag. 
             REGELS:
             1. Zet de titel ALTIJD tussen vierkante haken, bijvoorbeeld: [Pearl Harbor aanval].
-            2. Geef GEEN ENKELE andere tekst, uitleg of 'THOUGHT' proces. Alleen de haken met de titel erin.
+            2. Geef GEEN ENKELE andere tekst, uitleg of 'THOUGHT' proces.
             3. Gebruik alleen een hoofdletter voor het eerste woord (en eigennamen).
             Vraag: ${promptText}`,
-            
             GEMINI_REVIEW: (promptText, draft) => `Review dit antwoord op de vraag: "${promptText}". Antwoord: ${draft}`,
-            
             STRIKTE_REWRITE: (promptText, draft, feedback) => `Herschrijf het volgende antwoord. Geef uitsluitend resultaat. ## voor titels, ### voor subtitels. Vraag: ${promptText} | Draft: ${draft} | Feedback: ${feedback}`
         };
 
         let currentChatId = null;
         let abortController = null;
 
-        // --- MODULE: UI & STORAGE ---
         const StorageService = {
             async getChats() { return JSON.parse(localStorage.getItem('webbre_chats') || '[]'); },
             async saveChat(updatedChat) {
@@ -371,19 +275,28 @@
         window.onload = async () => {
             document.getElementById('chat-window').innerHTML = getWelcomeScreenHTML();
             await loadKeys(); await updateHistoryDisplay();
+            
             document.getElementById('userPrompt').addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); startWorkflow(); } });
+            
+            // Als je de categorie aanpast, bewaar dit dan direct voor de actieve chat
+            document.getElementById('chatCategory').addEventListener('change', async (e) => {
+                if (currentChatId) {
+                    const chats = await StorageService.getChats();
+                    const chatIndex = chats.findIndex(c => c.id === currentChatId);
+                    if (chatIndex !== -1) {
+                        chats[chatIndex].category = e.target.value;
+                        await StorageService.saveChat(chats[chatIndex]);
+                        await updateHistoryDisplay();
+                    }
+                }
+            });
         };
 
         async function loadKeys() {
             document.getElementById('geminiKey').value = await StorageService.getSetting('webbreGemini') || '';
             document.getElementById('claudeKey').value = await StorageService.getSetting('webbreClaude') || '';
-            
-            // Laad of zet de standaard modellen (aangepast naar Opus 4.7 en Gemini 2.5 Pro)
-            let claudeModel = await StorageService.getSetting('webbreClaudeModel') || 'claude-opus-4-7';
-            document.getElementById('claudeModel').value = claudeModel;
-
-            let geminiModel = await StorageService.getSetting('webbreGeminiModel') || 'gemini-2.5-pro';
-            document.getElementById('geminiModel').value = geminiModel;
+            document.getElementById('claudeModel').value = await StorageService.getSetting('webbreClaudeModel') || 'claude-opus-4-7';
+            document.getElementById('geminiModel').value = await StorageService.getSetting('webbreGeminiModel') || 'gemini-2.5-pro';
         }
 
         async function toggleSettings() {
@@ -391,15 +304,13 @@
             if (m.style.display === 'block') {
                 await StorageService.setSetting('webbreGemini', document.getElementById('geminiKey').value.trim());
                 await StorageService.setSetting('webbreGeminiModel', document.getElementById('geminiModel').value);
-                
                 await StorageService.setSetting('webbreClaude', document.getElementById('claudeKey').value.trim());
                 await StorageService.setSetting('webbreClaudeModel', document.getElementById('claudeModel').value);
-                
                 m.style.display = 'none'; showToast('Opgeslagen', 'success');
             } else { m.style.display = 'block'; }
         }
 
-        // --- MODULE: HISTORY ---
+        // --- MODULE: HISTORY MET CATEGORIEEN ---
         async function updateHistoryDisplay() {
             const chats = await StorageService.getChats();
             const query = document.getElementById('search-input').value.toLowerCase().trim();
@@ -408,20 +319,23 @@
             
             const pinned = filtered.filter(c => c.pinned);
             const unpinned = filtered.filter(c => !c.pinned);
+            
+            const werkChats = unpinned.filter(c => c.category === 'Werk & School');
+            const priveChats = unpinned.filter(c => c.category === 'Privé' || !c.category); // Fallback naar Privé
 
             if (pinned.length > 0) {
-                const h = document.createElement('div'); h.className = 'date-header'; h.innerText = '📌 Vastgezet'; list.appendChild(h);
+                const h = document.createElement('div'); h.className = 'category-header'; h.innerText = '📌 Vastgezet'; list.appendChild(h);
                 pinned.sort((a,b) => (b.updatedAt || b.id) - (a.updatedAt || a.id)).forEach(c => list.appendChild(createHistoryElement(c)));
             }
 
-            const grouped = {};
-            unpinned.sort((a,b) => (b.updatedAt || b.id) - (a.updatedAt || a.id)).forEach(c => {
-                const d = c.date || 'Onbekend'; if (!grouped[d]) grouped[d] = []; grouped[d].push(c);
-            });
+            if (werkChats.length > 0) {
+                const h = document.createElement('div'); h.className = 'category-header'; h.innerText = '💼 Werk & School'; list.appendChild(h);
+                werkChats.sort((a,b) => (b.updatedAt || b.id) - (a.updatedAt || a.id)).forEach(c => list.appendChild(createHistoryElement(c)));
+            }
 
-            for (const [date, arr] of Object.entries(grouped)) {
-                const h = document.createElement('div'); h.className = 'date-header'; h.innerText = date; list.appendChild(h);
-                arr.forEach(c => list.appendChild(createHistoryElement(c)));
+            if (priveChats.length > 0) {
+                const h = document.createElement('div'); h.className = 'category-header'; h.innerText = '🏠 Privé'; list.appendChild(h);
+                priveChats.sort((a,b) => (b.updatedAt || b.id) - (a.updatedAt || a.id)).forEach(c => list.appendChild(createHistoryElement(c)));
             }
         }
 
@@ -437,7 +351,12 @@
         async function loadChat(id) {
             currentChatId = id; const chats = await StorageService.getChats(); const chat = chats.find(c => c.id === id);
             const win = document.getElementById('chat-window'); win.innerHTML = '';
-            if (chat) chat.messages.forEach(m => appendMessage(m.role, m.content, false));
+            
+            if (chat) {
+                // Update dropdown naar de categorie van deze chat
+                if (chat.category) document.getElementById('chatCategory').value = chat.category;
+                chat.messages.forEach(m => appendMessage(m.role, m.content, false));
+            }
             updateHistoryDisplay();
         }
 
@@ -458,11 +377,9 @@
             return div;
         }
 
-        // --- MODULE: API ---
         async function callClaude(messages, signal) {
             const key = await StorageService.getSetting('webbreClaude');
             const model = await StorageService.getSetting('webbreClaudeModel') || 'claude-opus-4-7';
-            
             const res = await fetch("https://api.anthropic.com/v1/messages", {
                 method: "POST", headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true" },
                 body: JSON.stringify({ model, max_tokens: CONFIG.OUTPUT_TOKENS, messages }), signal
@@ -474,12 +391,11 @@
         async function callGemini(prompt, signal) {
             const key = await StorageService.getSetting('webbreGemini');
             const model = await StorageService.getSetting('webbreGeminiModel') || 'gemini-2.5-pro';
-            
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
             const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }), signal });
             if (!res.ok) throw new Error(`Gemini Fout: ${res.status}`);
             const data = await res.json();
-            let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
             if (!text) throw new Error('Geen antwoord van Gemini.');
             return text;
         }
@@ -488,19 +404,13 @@
             try { 
                 const rawText = await callGemini(PROMPTS.TITEL(promptText), null);
                 let nieuweTitel = rawText;
-
-                // Extractie logica: Haal alleen de tekst tussen de [ ] blokken
                 const match = rawText.match(/\[(.*?)\]/);
-                if (match && match[1]) {
-                    nieuweTitel = match[1].trim();
-                } else {
-                    // Fallback als Gemini de haken vergeet: pak de laatste leesbare regel
+                if (match && match[1]) { nieuweTitel = match[1].trim(); } 
+                else {
                     const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0 && !l.toUpperCase().includes('THOUGHT') && !l.startsWith('-'));
                     if (lines.length > 0) nieuweTitel = lines[lines.length - 1];
                 }
-
                 nieuweTitel = nieuweTitel.replace(/^["']|["']$/g, '');
-
                 const chats = await StorageService.getChats(); const c = chats.find(i => i.id === chatId);
                 if (c) { c.title = nieuweTitel; await StorageService.saveChat(c); updateHistoryDisplay(); }
             } catch(e) { console.error(e); }
@@ -516,11 +426,20 @@
             if (abortController) { abortController.abort(); return; }
             const prompt = document.getElementById('userPrompt').value.trim();
             if (!prompt) return;
+            
             if (!currentChatId) {
                 currentChatId = Date.now();
-                await StorageService.saveChat({ id: currentChatId, title: prompt.substring(0,20)+'...', date: new Date().toLocaleDateString('nl-NL'), createdAt: Date.now(), messages: [] });
+                const selectedCategory = document.getElementById('chatCategory').value;
+                await StorageService.saveChat({ 
+                    id: currentChatId, 
+                    title: prompt.substring(0,20)+'...', 
+                    category: selectedCategory,
+                    createdAt: Date.now(), 
+                    messages: [] 
+                });
                 generateChatTitle(prompt, currentChatId);
             }
+            
             abortController = new AbortController(); const signal = abortController.signal;
             const btn = document.getElementById('sendBtn'); btn.innerText = 'Stop'; btn.classList.add('stop-btn');
             const originalPrompt = prompt; appendMessage('user', prompt); document.getElementById('userPrompt').value = '';
