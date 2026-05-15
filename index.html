@@ -94,11 +94,11 @@
             gap: 15px;
         }
 
-        /* Nieuwe welkomstboodschap styling */
+        /* Nieuwe welkomstboodschap styling - verplaatst naar boven */
         .welcome-container {
-            margin: auto;
+            margin: 6vh auto auto auto; /* Zorgt dat het bovenaan centreert i.p.v. het exacte midden */
             text-align: center;
-            padding: 40px 20px;
+            padding: 20px;
             max-width: 600px;
         }
 
@@ -288,13 +288,13 @@
         <div id="chat-window">
             <div class="welcome-container">
                 <div class="welcome-title">Ewout's Optimum AI LLM</div>
-                <div class="welcome-subtitle">De briljante denkkracht van Claude en de vlijmscherpe controle van Gemini, gebundeld in één krachtige workflow.</div>
+                <div class="welcome-subtitle">De denkkracht van Claude en Gemini gebundeld</div>
             </div>
         </div>
 
         <div id="input-container">
             <div class="input-wrapper">
-                <textarea id="userPrompt" rows="3" placeholder="Stel een vraag... (Shift + Enter voor een nieuwe regel)"></textarea>
+                <textarea id="userPrompt" rows="6" placeholder="Stel een vraag... (Shift + Enter voor een nieuwe regel)"></textarea>
                 <div class="controls">
                     <span class="api-keys-link" onclick="toggleSettings()">Instellingen (API & Modellen)</span>
                     <button class="send-btn" id="sendBtn" onclick="startWorkflow()">Verstuur</button>
@@ -319,17 +319,15 @@
 
         let chats = JSON.parse(localStorage.getItem('webbre_chats') || '[]');
         let currentChatId = null;
-        let abortController = null; // Voor de Stop functionaliteit
+        let abortController = null;
 
         window.onload = () => {
             loadKeys();
             renderHistory();
             
-            // Toetsenbord Enter listener
             document.getElementById('userPrompt').addEventListener('keydown', function(e) {
-                // Enter indrukken ZONDER Shift activeert direct het versturen
                 if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault(); // Voorkomt dat er een enter (witregel) in het veld komt
+                    e.preventDefault();
                     startWorkflow();
                 }
             });
@@ -396,7 +394,7 @@
             document.getElementById('chat-window').innerHTML = `
                 <div class="welcome-container">
                     <div class="welcome-title">Ewout's Optimum AI LLM</div>
-                    <div class="welcome-subtitle">De briljante denkkracht van Claude en de vlijmscherpe controle van Gemini, gebundeld in één krachtige workflow.</div>
+                    <div class="welcome-subtitle">De denkkracht van Claude en Gemini gebundeld</div>
                 </div>
             `;
             document.getElementById('userPrompt').value = '';
@@ -415,7 +413,6 @@
         function appendMessage(role, content) {
             const window = document.getElementById('chat-window');
             
-            // Verwijder het welkomstscherm zodra het eerste bericht gestuurd wordt
             const welcome = window.querySelector('.welcome-container');
             if (welcome) {
                 welcome.remove();
@@ -451,7 +448,6 @@
             const sendBtn = document.getElementById('sendBtn');
             const userPromptElement = document.getElementById('userPrompt');
             
-            // Als het proces al loopt, breek het af
             if (abortController) {
                 abortController.abort();
                 return;
@@ -463,7 +459,7 @@
             const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-opus-4-7').trim();
             const chatWindow = document.getElementById('chat-window');
 
-            if (!prompt) return; // Doe niets als het veld leeg is
+            if (!prompt) return;
 
             if (!geminiKey || !claudeKey) {
                 alert("Zorg dat je beide API keys in de instellingen hebt opgeslagen.");
@@ -481,14 +477,12 @@
                 });
             }
 
-            // Stel de Stop knop in en maak de AbortController klaar
             abortController = new AbortController();
             const signal = abortController.signal;
             
             sendBtn.innerText = 'Stop';
             sendBtn.classList.add('stop-btn');
             
-            // Originele prompt onthouden voor als we op stop klikken
             const originalPrompt = prompt;
             
             appendMessage('user', prompt);
@@ -519,7 +513,7 @@
                         max_tokens: 2048,
                         messages: [{ role: "user", content: prompt }]
                     }),
-                    signal: signal // Luistert of de stopknop is ingedrukt
+                    signal: signal
                 });
 
                 if (!res1.ok) {
@@ -615,16 +609,14 @@ Feedback: ${feedback}`;
             } catch (e) {
                 loadingNode.remove();
                 
-                // Vang specifiek de 'stop' actie op
                 if (e.name === 'AbortError') {
                     appendMessage('error', 'Generatie gestopt. De prompt is teruggeplaatst in het tekstvak.');
-                    userPromptElement.value = originalPrompt; // Zet de tekst terug
+                    userPromptElement.value = originalPrompt;
                 } else {
                     console.error(e);
                     appendMessage('error', `Fout: ${e.message}`);
                 }
             } finally {
-                // Herstel de knop naar de originele staat
                 abortController = null;
                 sendBtn.innerText = 'Verstuur';
                 sendBtn.classList.remove('stop-btn');
