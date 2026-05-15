@@ -37,6 +37,7 @@
             cursor: pointer;
             font-weight: bold;
             margin-bottom: 20px;
+            transition: background 0.3s;
         }
 
         .new-chat-btn:hover {
@@ -93,6 +94,27 @@
             gap: 15px;
         }
 
+        /* Nieuwe welkomstboodschap styling */
+        .welcome-container {
+            margin: auto;
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 600px;
+        }
+
+        .welcome-title {
+            color: #8e1f2f;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .welcome-subtitle {
+            color: #5f6368;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
         .message {
             max-width: 80%;
             padding: 12px 16px;
@@ -116,40 +138,14 @@
             border-left: 4px solid #8e1f2f;
         }
 
-        /* -----------------------------------------------------
-           MARKDOWN STYLING VOOR AI BERICHTEN
-           ----------------------------------------------------- */
-        .ai-message p {
-            margin: 0 0 10px 0;
-        }
-        .ai-message p:last-child {
-            margin-bottom: 0;
-        }
-        /* Hoofdkopjes vetgedrukt en zelfde lettergrootte */
-        .ai-message h1, .ai-message h2 {
-            font-size: 15px; 
-            font-weight: bold;
-            margin: 15px 0 5px 0;
-        }
-        /* Subkopjes onderstreept en zelfde lettergrootte */
-        .ai-message h3, .ai-message h4 {
-            font-size: 15px;
-            font-weight: normal;
-            text-decoration: underline;
-            margin: 15px 0 5px 0;
-        }
-        .ai-message h1:first-child, .ai-message h2:first-child, .ai-message h3:first-child {
-            margin-top: 0;
-        }
-        /* Lijsten met bullets, geen ruimte tussen bullets */
-        .ai-message ul, .ai-message ol {
-            margin: 5px 0 10px 0;
-            padding-left: 20px;
-        }
-        .ai-message li {
-            margin-bottom: 0px; 
-        }
-        /* ----------------------------------------------------- */
+        /* Markdown styling */
+        .ai-message p { margin: 0 0 10px 0; }
+        .ai-message p:last-child { margin-bottom: 0; }
+        .ai-message h1, .ai-message h2 { font-size: 15px; font-weight: bold; margin: 15px 0 5px 0; }
+        .ai-message h3, .ai-message h4 { font-size: 15px; font-weight: normal; text-decoration: underline; margin: 15px 0 5px 0; }
+        .ai-message h1:first-child, .ai-message h2:first-child, .ai-message h3:first-child { margin-top: 0; }
+        .ai-message ul, .ai-message ol { margin: 5px 0 10px 0; padding-left: 20px; }
+        .ai-message li { margin-bottom: 0px; }
 
         .error-message {
             align-self: flex-start;
@@ -158,8 +154,8 @@
             border: 1px solid #cc0000;
         }
 
-        /* Styling voor het tijdelijke laadscherm (preloader) */
-        .loading-steps {
+        /* Styling voor het tijdelijke laadscherm */
+        .loading-steps, .workflow-steps {
             align-self: flex-start;
             background-color: transparent;
             padding: 5px 15px;
@@ -170,32 +166,20 @@
             gap: 8px;
             font-style: italic;
         }
-        
-        .loading-step {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
 
         .workflow-steps {
-            align-self: flex-start;
             background-color: #fdfcfb;
             border-left: 3px solid #f0b516;
             padding: 10px 15px;
             border-radius: 0 10px 10px 0;
-            font-size: 13px;
-            color: #5f6368;
             margin-bottom: -5px;
-            display: flex;
-            flex-direction: column;
             gap: 5px;
-            font-style: italic;
         }
         
-        .workflow-step {
+        .loading-step, .workflow-step {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         /* CSS Animatie voor de spinner */
@@ -261,10 +245,19 @@
             border-radius: 20px;
             cursor: pointer;
             font-weight: bold;
+            transition: background-color 0.3s;
         }
 
         button.send-btn:hover {
             background-color: #7a1a28;
+        }
+
+        button.send-btn.stop-btn {
+            background-color: #cc0000;
+        }
+
+        button.send-btn.stop-btn:hover {
+            background-color: #990000;
         }
 
         /* Instellingen scherm */
@@ -293,12 +286,15 @@
 
     <div id="main-content">
         <div id="chat-window">
-            <div class="message ai-message">Welkom bij Ewout's Optimum AI LLM. Hoe kan ik je vandaag helpen?</div>
+            <div class="welcome-container">
+                <div class="welcome-title">Ewout's Optimum AI LLM</div>
+                <div class="welcome-subtitle">De briljante denkkracht van Claude en de vlijmscherpe controle van Gemini, gebundeld in één krachtige workflow.</div>
+            </div>
         </div>
 
         <div id="input-container">
             <div class="input-wrapper">
-                <textarea id="userPrompt" rows="3" placeholder="Stel een vraag..."></textarea>
+                <textarea id="userPrompt" rows="3" placeholder="Stel een vraag... (Shift + Enter voor een nieuwe regel)"></textarea>
                 <div class="controls">
                     <span class="api-keys-link" onclick="toggleSettings()">Instellingen (API & Modellen)</span>
                     <button class="send-btn" id="sendBtn" onclick="startWorkflow()">Verstuur</button>
@@ -309,16 +305,12 @@
 
     <div id="settings-modal">
         <h3 style="color: #8e1f2f;">Instellingen</h3>
-        
         <label style="font-size: 12px; font-weight: bold;">Gemini API Key:</label>
         <input type="password" id="geminiKey" style="width:100%; margin-bottom:10px; padding:8px; box-sizing:border-box;">
-        
         <label style="font-size: 12px; font-weight: bold;">Claude API Key:</label>
         <input type="password" id="claudeKey" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
-
         <label style="font-size: 12px; font-weight: bold;">Claude Model:</label>
         <input type="text" id="claudeModel" placeholder="Bijv. claude-opus-4-7" style="width:100%; margin-bottom:15px; padding:8px; box-sizing:border-box;">
-        
         <button onclick="toggleSettings()" style="background: #f0b516; color: #8e1f2f; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%;">Sluiten en opslaan</button>
     </div>
 
@@ -327,10 +319,20 @@
 
         let chats = JSON.parse(localStorage.getItem('webbre_chats') || '[]');
         let currentChatId = null;
+        let abortController = null; // Voor de Stop functionaliteit
 
         window.onload = () => {
             loadKeys();
             renderHistory();
+            
+            // Toetsenbord Enter listener
+            document.getElementById('userPrompt').addEventListener('keydown', function(e) {
+                // Enter indrukken ZONDER Shift activeert direct het versturen
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault(); // Voorkomt dat er een enter (witregel) in het veld komt
+                    startWorkflow();
+                }
+            });
         };
 
         function loadKeys() {
@@ -347,7 +349,6 @@
 
         function toggleSettings() {
             const modal = document.getElementById('settings-modal');
-            
             if (modal.style.display === 'block') {
                 const gKey = document.getElementById('geminiKey').value.trim();
                 const cKey = document.getElementById('claudeKey').value.trim();
@@ -392,7 +393,12 @@
 
         function startNewChat() {
             currentChatId = null;
-            document.getElementById('chat-window').innerHTML = '<div class="message ai-message">Welkom bij Ewout\'s Optimum AI LLM. Hoe kan ik je vandaag helpen?</div>';
+            document.getElementById('chat-window').innerHTML = `
+                <div class="welcome-container">
+                    <div class="welcome-title">Ewout's Optimum AI LLM</div>
+                    <div class="welcome-subtitle">De briljante denkkracht van Claude en de vlijmscherpe controle van Gemini, gebundeld in één krachtige workflow.</div>
+                </div>
+            `;
             document.getElementById('userPrompt').value = '';
             renderHistory();
         }
@@ -408,6 +414,13 @@
 
         function appendMessage(role, content) {
             const window = document.getElementById('chat-window');
+            
+            // Verwijder het welkomstscherm zodra het eerste bericht gestuurd wordt
+            const welcome = window.querySelector('.welcome-container');
+            if (welcome) {
+                welcome.remove();
+            }
+
             const div = document.createElement('div');
             
             if (role === 'error') {
@@ -423,7 +436,6 @@
                 });
             } else if (role === 'ai') {
                 div.className = 'message ai-message';
-                // Zet raw markdown om naar visuele HTML
                 div.innerHTML = marked.parse(content);
             } else {
                 div.className = `message user-message`;
@@ -436,15 +448,25 @@
         }
 
         async function startWorkflow() {
-            const prompt = document.getElementById('userPrompt').value.trim();
+            const sendBtn = document.getElementById('sendBtn');
+            const userPromptElement = document.getElementById('userPrompt');
+            
+            // Als het proces al loopt, breek het af
+            if (abortController) {
+                abortController.abort();
+                return;
+            }
+
+            const prompt = userPromptElement.value.trim();
             const geminiKey = (localStorage.getItem('webbreGemini') || '').trim();
             const claudeKey = (localStorage.getItem('webbreClaude') || '').trim();
             const claudeModel = (localStorage.getItem('webbreClaudeModel') || 'claude-opus-4-7').trim();
-            const sendBtn = document.getElementById('sendBtn');
             const chatWindow = document.getElementById('chat-window');
 
-            if (!prompt || !geminiKey || !claudeKey) {
-                alert("Zorg dat je een vraag hebt getypt én de API keys hebt ingesteld.");
+            if (!prompt) return; // Doe niets als het veld leeg is
+
+            if (!geminiKey || !claudeKey) {
+                alert("Zorg dat je beide API keys in de instellingen hebt opgeslagen.");
                 return;
             }
 
@@ -459,11 +481,18 @@
                 });
             }
 
-            sendBtn.disabled = true;
-            sendBtn.style.backgroundColor = "#ccc";
+            // Stel de Stop knop in en maak de AbortController klaar
+            abortController = new AbortController();
+            const signal = abortController.signal;
+            
+            sendBtn.innerText = 'Stop';
+            sendBtn.classList.add('stop-btn');
+            
+            // Originele prompt onthouden voor als we op stop klikken
+            const originalPrompt = prompt;
             
             appendMessage('user', prompt);
-            document.getElementById('userPrompt').value = '';
+            userPromptElement.value = '';
 
             const loadingNode = document.createElement('div');
             loadingNode.className = 'loading-steps';
@@ -489,7 +518,8 @@
                         model: claudeModel,
                         max_tokens: 2048,
                         messages: [{ role: "user", content: prompt }]
-                    })
+                    }),
+                    signal: signal // Luistert of de stopknop is ingedrukt
                 });
 
                 if (!res1.ok) {
@@ -511,7 +541,8 @@
                 const res2 = await fetch(geminiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: `Review dit antwoord op de vraag: "${prompt}". Antwoord: ${draft}` }] }] })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: `Review dit antwoord op de vraag: "${prompt}". Antwoord: ${draft}` }] }] }),
+                    signal: signal
                 });
                 
                 if (!res2.ok) {
@@ -529,7 +560,6 @@
                     <div class="loading-step"><div class="spinner"></div> Claude optimaliseert...</div>
                 `;
 
-                // Aangescherpte prompt engineering voor specifieke layout en taaleisen
                 const striktePrompt = `Herschrijf het volgende antwoord op de vraag met behulp van de gegeven feedback. Belangrijk: Geef UITSLUITEND het herschreven eindresultaat terug. Voeg absoluut geen inleidende of afsluitende zinnen toe (zoals "Hier is het aangepaste antwoord" of "Ik heb het verbeterd"). Reageer niet op de feedback zelf en begin direct met de eerste letter van de definitieve tekst.
 
 Pas daarnaast strikt de volgende opmaakregels toe:
@@ -551,7 +581,8 @@ Feedback: ${feedback}`;
                         model: claudeModel,
                         max_tokens: 2048,
                         messages: [{ role: "user", content: striktePrompt }]
-                    })
+                    }),
+                    signal: signal
                 });
 
                 if (!res3.ok) {
@@ -582,12 +613,21 @@ Feedback: ${feedback}`;
                 renderHistory();
 
             } catch (e) {
-                console.error(e);
                 loadingNode.remove();
-                appendMessage('error', `Fout: ${e.message}`);
+                
+                // Vang specifiek de 'stop' actie op
+                if (e.name === 'AbortError') {
+                    appendMessage('error', 'Generatie gestopt. De prompt is teruggeplaatst in het tekstvak.');
+                    userPromptElement.value = originalPrompt; // Zet de tekst terug
+                } else {
+                    console.error(e);
+                    appendMessage('error', `Fout: ${e.message}`);
+                }
             } finally {
-                sendBtn.disabled = false;
-                sendBtn.style.backgroundColor = "#8e1f2f";
+                // Herstel de knop naar de originele staat
+                abortController = null;
+                sendBtn.innerText = 'Verstuur';
+                sendBtn.classList.remove('stop-btn');
             }
         }
     </script>
