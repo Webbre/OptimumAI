@@ -366,6 +366,22 @@
         .chevron.collapsed {
             transform: rotate(-90deg);
         }
+
+        /* Datums binnenin de categorie-mappen */
+        .date-header {
+            font-size: 11px;
+            color: #718096;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding-left: 5px;
+        }
+
+        /* Klein beetje inspringen voor een map-structuur gevoel */
+        .category-group-container {
+            padding-left: 5px;
+        }
         
         .history-item {
             padding: 10px;
@@ -554,7 +570,7 @@
         const CONFIG = { 
             OUTPUT_TOKENS: 4096 
         };
-        const SCHEMA_VERSION = 2;
+        const SCHEMA_VERSION = 3;
         
         const WORKFLOW_STEPS_TEXTS = {
             CLAUDE_BUSY: 'Claude denkt na...', 
@@ -582,11 +598,11 @@
         // Persistent inklap-geheugen via LocalStorage
         let collapsedCategories = new Set(JSON.parse(localStorage.getItem('collapsed_categories') || '[]'));
 
-        // --- MODULE: STORAGE SERVICE MET INTELLIGENTE CACHE & ATOMAIRE UPDATE ---
+        // --- MODULE: STORAGE SERVICE ---
         const StorageService = {
             _cache: null,
             _cacheTimestamp: 0,
-            CACHE_TTL: 5000, // 5 seconden in-memory caching ter voorbereiding op Firebase latency
+            CACHE_TTL: 5000, 
 
             async getChats(forceRefresh = false) {
                 const now = Date.now();
@@ -622,7 +638,7 @@
                 await this.saveAllChats(chats);
             },
 
-            // Fix voor Race Condition: Atomaire update van één specifiek veld (zoals title of category)
+            // Atomaire update van één specifiek veld 
             async updateChatField(chatId, field, value) {
                 const chats = await this.getChats(true);
                 const index = chats.findIndex(c => c.id === chatId);
@@ -642,7 +658,7 @@
             }
         };
 
-        // --- MODULE: DATA MIGRATIE STRATEGIE (Herstelt je missende data!) ---
+        // --- MODULE: DATA MIGRATIE STRATEGIE (Herstelt je missende data & ID mismatches!) ---
         async function runMigrations() {
             const storedVersion = parseInt(await StorageService.getSetting('webbre_schema_version') || '0');
             if (storedVersion >= SCHEMA_VERSION) return;
@@ -651,7 +667,12 @@
             let changed = false;
             
             chats.forEach(c => {
-                // Normaliseer oude categorieën naar de nieuwe kleine 's' standaard
+                // Zet oude timestamp-ID's om naar cloud-ready String-ID's
+                if (typeof c.id === 'number') {
+                    c.id = `chat_${c.id}_legacy`;
+                    changed = true;
+                }
+                // Normaliseer categorieën 
                 if (!c.category || c.category === 'Werk & School') { 
                     c.category = 'Werk & school'; 
                     changed = true; 
@@ -661,7 +682,7 @@
                     changed = true; 
                 }
                 if (!c.createdAt) { 
-                    c.createdAt = (typeof c.id === 'number') ? c.id : Date.now(); 
+                    c.createdAt = Date.now(); 
                     changed = true; 
                 }
                 if (!c.updatedAt) { 
@@ -712,7 +733,7 @@
         window.onload = async () => {
             document.getElementById('chat-window').innerHTML = getWelcomeScreenHTML();
             await loadKeys(); 
-            await runMigrations(); // Draai migraties vóór de render van de geschiedenis!
+            await runMigrations(); 
             await updateHistoryDisplay();
             
             document.getElementById('userPrompt').addEventListener('keydown', e => { 
@@ -751,7 +772,7 @@
             }
         }
 
-        // --- MODULE: HISTORY MET INKLAPBARE CATEGORIEEN & DATUMS ---
+        // --- MODULE: HISTORY MET INKLAPBARE CATEGORIEEN & DATUMS BINNENIN ---
         function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
             if (chatsArray.length === 0) return;
             
@@ -775,9 +796,33 @@
 
             if (!isCollapsed) {
                 const container = document.createElement('div');
-                chatsArray.sort((a,b) => (b.updatedAt || b.id) - (a.updatedAt || a.id)).forEach(c => {
-                    container.appendChild(createHistoryElement(c));
-                });
+                container.className = 'category-group-container'; // Klein beetje inspringen
+                
+                // Groepeer de chats op datum (behalve de gepinde chats)
+                if (categoryId === 'pinned') {
+                    chatsArray.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => {
+                        container.appendChild(createHistoryElement(c));
+                    });
+                } else {
+                    const groupedByDate = {};
+                    chatsArray.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(chat => {
+                        const d = chat.date || 'Onbekende datum';
+                        if (!groupedByDate[d]) groupedByDate[d] = [];
+                        groupedByDate[d].push(chat);
+                    });
+
+                    // Render de datum koppen mét de bijbehorende chats eronder
+                    for (const [date, arr] of Object.entries(groupedByDate)) {
+                        const dateHeader = document.createElement('div');
+                        dateHeader.className = 'date-header';
+                        dateHeader.innerText = date;
+                        container.appendChild(dateHeader);
+                        
+                        arr.forEach(c => {
+                            container.appendChild(createHistoryElement(c));
+                        });
+                    }
+                }
                 listElement.appendChild(container);
             }
         }
@@ -792,8 +837,8 @@
             const pinned = filtered.filter(c => c.pinned);
             const unpinned = filtered.filter(c => !c.pinned);
             
-            const werkChats = unpinned.filter(c => c.category === 'Werk & school' || c.category === 'Werk & School');
-            const priveChats = unpinned.filter(c => c.category !== 'Werk & school' && c.category !== 'Werk & School');
+            const werkChats = unpinned.filter(c => c.category === 'Werk & school');
+            const priveChats = unpinned.filter(c => c.category !== 'Werk & school');
 
             renderCategoryGroup('📌 Vastgezet', pinned, 'pinned', list);
             renderCategoryGroup('💼 Werk & school', werkChats, 'werk', list);
@@ -807,18 +852,16 @@
             
             const t = document.createElement('span'); 
             t.className = 'chat-title-text'; 
-            
-            // Render de titel én zet de datum er netjes bij terug
-            const dateDisplay = chat.date ? ` (${chat.date})` : '';
-            t.innerText = (chat.title || 'Nieuwe chat') + dateDisplay;
+            t.innerText = chat.title || 'Nieuwe chat'; // Datum string is hier weggehaald!
             
             const p = document.createElement('button'); 
             p.className = `pin-btn ${chat.pinned ? 'pinned' : ''}`; 
             p.innerText = '📌';
+            
+            // Fix van Claude: Atomaire update om overschrijven door generateChatTitle te voorkomen
             p.onclick = async (e) => { 
                 e.stopPropagation(); 
-                chat.pinned = !chat.pinned; 
-                await StorageService.saveChat(chat); 
+                await StorageService.updateChatField(chat.id, 'pinned', !chat.pinned);
                 updateHistoryDisplay(); 
             };
             
@@ -835,10 +878,8 @@
             win.innerHTML = '';
             
             if (chat) {
-                document.getElementById('chatCategory').value = (chat.category === 'Werk & School') ? 'Werk & school' : (chat.category || 'Privé');
+                document.getElementById('chatCategory').value = chat.category || 'Privé';
                 chat.messages.forEach(m => appendMessage(m.role, m.content, false));
-                
-                // Fix van Claude: Scroll direct naar de bodem bij het laden van een oude chat
                 win.scrollTop = win.scrollHeight;
             }
             updateHistoryDisplay();
@@ -851,7 +892,6 @@
             
             const div = document.createElement('div');
             
-            // Robuuste rol-validatie van Claude ter voorbereiding op dataopslag
             if (role === 'steps') {
                 div.className = 'workflow-steps';
                 content.forEach(s => { 
@@ -923,7 +963,7 @@
 
         async function callGemini(prompt, signal) {
             const key = await StorageService.getSetting('webbreGemini');
-            const model = await StorageService.getSetting('webbreTriModel') || await StorageService.getSetting('webbreGeminiModel') || 'gemini-2.5-pro';
+            const model = await StorageService.getSetting('webbreGeminiModel') || 'gemini-2.5-pro';
             
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
             
@@ -976,7 +1016,6 @@
                 }
                 nieuweTitel = nieuweTitel.replace(/^["']|["']$/g, '');
                 
-                // Fix van Claude: Update via updateChatField voorkomt overschrijven berichten-array!
                 await StorageService.updateChatField(chatId, 'title', nieuweTitel);
                 await updateHistoryDisplay();
             } catch(e) { 
@@ -999,11 +1038,9 @@
             if (!prompt) return;
             
             if (!currentChatId) {
-                // Maak String ID ter voorbereiding op Firebase Firestore documenten
                 currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
                 const selectedCategory = document.getElementById('chatCategory').value;
                 
-                // userId: null netjes toegevoegd ten behoeve van Firebase Queries
                 await StorageService.saveChat({ 
                     id: currentChatId, 
                     userId: null,
