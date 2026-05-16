@@ -32,139 +32,466 @@
         }
 
         .new-chat-btn {
-            background: #98C93C; color: white; border: none; padding: 12px; border-radius: 20px;
-            cursor: pointer; font-weight: bold; margin-bottom: 15px; transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(152, 201, 60, 0.3); flex-shrink: 0;
+            background: #98C93C; 
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(152, 201, 60, 0.3);
+            flex-shrink: 0;
         }
-        .new-chat-btn:hover { background: #85B334; transform: translateY(-1px); }
+
+        .new-chat-btn:hover {
+            background: #85B334;
+            transform: translateY(-1px);
+        }
 
         /* Zoekbalk */
-        .search-container { margin-bottom: 15px; flex-shrink: 0; }
-        #search-input { width: 100%; padding: 10px 15px; border: 1px solid #CBD5E0; border-radius: 20px; font-size: 13px; box-sizing: border-box; background-color: white; }
-        #search-input:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 2px rgba(32, 148, 208, 0.15); }
-
-        /* Chat Window & Berichten */
-        #main-content { flex: 1; display: flex; flex-direction: column; position: relative; border-top: 5px solid #2094D0; }
-        #chat-window { flex: 1; padding: 20px 20px 100px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
-
-        .welcome-container { margin: 6vh 0 0 0; text-align: left; max-width: 800px; }
-        .welcome-title { color: #2094D0; font-size: 32px; font-weight: bold; margin-bottom: 10px; }
-        .welcome-subtitle { color: #4A5568; font-size: 16px; line-height: 1.5; }
-
-        .message {
-            max-width: 80%; padding: 16px 20px; border-radius: 12px; line-height: 1.6; font-size: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-wrap: break-word; word-wrap: break-word; hyphens: auto;
+        .search-container {
+            margin-bottom: 15px;
+            flex-shrink: 0;
         }
 
-        .message pre { background: #f8f9fa; padding: 10px; border-radius: 6px; overflow-x: auto; border: 1px solid #e2e8f0; }
+        #search-input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #CBD5E0;
+            border-radius: 20px;
+            font-size: 13px;
+            box-sizing: border-box;
+            background-color: white;
+        }
 
-        .user-message { align-self: flex-end; background-color: #2094D0; color: white; border-bottom-right-radius: 4px; }
-        .ai-message { align-self: flex-start; background-color: white; color: #1A202C; border-left: 5px solid #2094D0; border-bottom-left-radius: 4px; }
+        #search-input:focus {
+            outline: none;
+            border-color: #2094D0;
+            box-shadow: 0 0 0 2px rgba(32, 148, 208, 0.15);
+        }
 
-        /* Markdown styling within AI messages */
-        .ai-message p { margin: 0 0 10px 0; }
-        .ai-message p:last-child { margin-bottom: 0; }
-        .ai-message h1, .ai-message h2 { font-size: 16px; font-weight: bold; margin: 18px 0 8px 0; color: #1A202C; }
-        .ai-message h3, .ai-message h4 { font-size: 15px; font-weight: normal; text-decoration: underline; margin: 15px 0 5px 0; color: #1A202C; }
-        .ai-message h1:first-child, .ai-message h2:first-child, .ai-message h3:first-child { margin-top: 0; }
-        .ai-message ul, .ai-message ol { margin: 5px 0 10px 0; padding-left: 20px; color: #2D3748;}
-        .ai-message li { margin-bottom: 4px; }
+        /* Chat Window & Berichten */
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-top: 5px solid #2094D0;
+        }
 
-        .error-message { align-self: flex-start; background-color: #fce4e4; color: #cc0000; border: 1px solid #cc0000; }
+        #chat-window {
+            flex: 1;
+            padding: 20px 20px 100px 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .welcome-container {
+            margin: 6vh 0 0 0;
+            text-align: left;
+            max-width: 800px;
+        }
+
+        .welcome-title {
+            color: #2094D0;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .welcome-subtitle {
+            color: #4A5568;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 16px 20px;
+            border-radius: 12px;
+            line-height: 1.6;
+            font-size: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            hyphens: auto;
+        }
+
+        .message pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: #2094D0;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+            background-color: white;
+            color: #1A202C;
+            border-left: 5px solid #2094D0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .ai-message p {
+            margin: 0 0 10px 0;
+        }
+
+        .ai-message p:last-child {
+            margin-bottom: 0;
+        }
+
+        .ai-message h1, .ai-message h2 {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 18px 0 8px 0;
+            color: #1A202C;
+        }
+
+        .ai-message h3, .ai-message h4 {
+            font-size: 15px;
+            font-weight: normal;
+            text-decoration: underline;
+            margin: 15px 0 5px 0;
+            color: #1A202C;
+        }
+
+        .ai-message h1:first-child, .ai-message h2:first-child, .ai-message h3:first-child {
+            margin-top: 0;
+        }
+
+        .ai-message ul, .ai-message ol {
+            margin: 5px 0 10px 0;
+            padding-left: 20px;
+            color: #2D3748;
+        }
+
+        .ai-message li {
+            margin-bottom: 4px;
+        }
+
+        .error-message {
+            align-self: flex-start;
+            background-color: #fce4e4;
+            color: #cc0000;
+            border: 1px solid #cc0000;
+        }
 
         /* Workflow steps box */
         .workflow-steps {
-            align-self: flex-start; background-color: white; border: 1px solid #E2E8F0; border-left: 3px solid #98C93C; 
-            padding: 12px 16px; border-radius: 8px; font-size: 13px; color: #718096; display: flex; flex-direction: column;
-            gap: 6px; font-style: italic; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            align-self: flex-start;
+            background-color: white;
+            border: 1px solid #E2E8F0;
+            border-left: 3px solid #98C93C;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #718096;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-style: italic;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         
-        .loading-step, .workflow-step { display: flex; align-items: center; gap: 10px; }
-        .workflow-done { color: #98C93C; font-weight: bold; font-style: normal; }
+        .loading-step, .workflow-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .workflow-done {
+            color: #98C93C;
+            font-weight: bold;
+            font-style: normal;
+        }
 
         .spinner {
-            border: 2px solid #E2E8F0; border-top: 2px solid #2094D0; border-radius: 50%; width: 12px; height: 12px;
-            animation: spin 1s linear infinite; display: inline-block;
+            border: 2px solid #E2E8F0;
+            border-top: 2px solid #2094D0;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
         }
 
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
 
         /* Input area */
-        #input-container { padding: 10px 20px 20px 20px; background: #F4F9EB; position: relative; z-index: 10; }
-        #input-container::before {
-            content: ''; position: absolute; top: -100px; left: 0; right: 0; height: 100px; 
-            background: linear-gradient(to bottom, rgba(244,249,235,0) 0%, rgba(244,249,235,1) 100%); pointer-events: none; 
+        #input-container {
+            padding: 10px 20px 20px 20px;
+            background: #F4F9EB;
+            position: relative;
+            z-index: 10;
         }
 
-        .input-wrapper { max-width: 80%; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+        #input-container::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(to bottom, rgba(244,249,235,0) 0%, rgba(244,249,235,1) 100%);
+            pointer-events: none;
+        }
+
+        .input-wrapper {
+            max-width: 80%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
         /* Categorie Selector */
         .category-select {
-            padding: 8px 12px; border: 1px solid #CBD5E0; border-radius: 8px; background-color: white;
-            color: #4A5568; font-size: 13px; font-weight: bold; cursor: pointer; outline: none; width: fit-content;
+            padding: 8px 12px;
+            border: 1px solid #CBD5E0;
+            border-radius: 8px;
+            background-color: white;
+            color: #4A5568;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            outline: none;
+            width: fit-content;
         }
-        .category-select:focus { border-color: #2094D0; }
+
+        .category-select:focus {
+            border-color: #2094D0;
+        }
 
         textarea {
-            width: 100%; padding: 15px; background-color: white; border: 2px solid #E2E8F0; border-radius: 12px;
-            resize: none; font-size: 16px; box-sizing: border-box; color: #2D3748; transition: all 0.3s;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03); 
+            width: 100%;
+            padding: 15px;
+            background-color: white;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            resize: none;
+            font-size: 16px;
+            box-sizing: border-box;
+            color: #2D3748;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
         }
-        textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgba(32, 148, 208, 0.15); }
 
-        .controls { display: flex; justify-content: space-between; align-items: center; }
-        .api-keys-link { font-size: 12px; color: #718096; text-decoration: underline; cursor: pointer; font-weight: bold; transition: color 0.3s; }
-        .api-keys-link:hover { color: #2094D0; }
+        textarea:focus {
+            outline: none;
+            border-color: #2094D0;
+            box-shadow: 0 0 0 3px rgba(32, 148, 208, 0.15);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .api-keys-link {
+            font-size: 12px;
+            color: #718096;
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .api-keys-link:hover {
+            color: #2094D0;
+        }
 
         .send-btn {
-            background-color: #2094D0; color: white; border: none; padding: 10px 24px; border-radius: 20px;
-            cursor: pointer; font-weight: bold; transition: background-color 0.3s, transform 0.1s;
+            background-color: #2094D0;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.1s;
         }
-        .send-btn:hover { background-color: #1A7BAE; }
-        .stop-btn { background-color: #cc0000 !important; }
 
-        /* History & Headers - AANGEPAST VOOR INKLAPPEN */
-        .category-header { 
-            font-size: 12px; color: #2094D0; margin-top: 15px; margin-bottom: 5px; 
-            font-weight: bold; text-transform: uppercase; padding-left: 5px; 
-            display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer; user-select: none; transition: opacity 0.2s;
+        .send-btn:hover {
+            background-color: #1A7BAE;
         }
-        .category-header:hover { opacity: 0.7; }
-        .chevron { transition: transform 0.2s ease; font-size: 10px; }
-        .chevron.collapsed { transform: rotate(-90deg); }
-        
-        .history-item { 
-            padding: 10px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; 
-            font-size: 14px; color: #4A5568; transition: background 0.2s; 
-            display: flex; justify-content: space-between; align-items: center;
+
+        .stop-btn {
+            background-color: #cc0000 !important;
         }
-        .history-item:hover { background-color: #DDEBF4; }
-        .history-item.active { background-color: #2094D0; color: white; font-weight: bold; }
+
+        /* Zijbalk Menu & Inklappen */
+        .category-header {
+            font-size: 12px;
+            color: #2094D0;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding-left: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: opacity 0.2s;
+        }
+
+        .category-header:hover {
+            opacity: 0.7;
+        }
+
+        .chevron {
+            transition: transform 0.2s ease;
+            font-size: 10px;
+        }
+
+        .chevron.collapsed {
+            transform: rotate(-90deg);
+        }
         
-        .chat-title-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; margin-right: 5px; }
+        .history-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #4A5568;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item:hover {
+            background-color: #DDEBF4;
+        }
+
+        .history-item.active {
+            background-color: #2094D0;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .chat-title-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            margin-right: 5px;
+        }
 
         .pin-btn {
-            background: transparent; border: none; cursor: pointer; opacity: 0; 
-            transition: opacity 0.2s; padding: 0 5px; font-size: 14px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            padding: 0 5px;
+            font-size: 14px;
         }
-        .history-item:hover .pin-btn, .pin-btn.pinned { opacity: 1; }
+
+        .history-item:hover .pin-btn, .pin-btn.pinned {
+            opacity: 1;
+        }
 
         /* Toast Notifications */
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column-reverse; gap: 10px; }
-        .toast { padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.3s ease-in-out; font-size: 14px; font-weight: 500; }
-        .toast-error { background-color: #fce4e4; color: #cc0000; border: 1px solid #cc0000; }
-        .toast-success { background-color: #e6ffe6; color: #009900; border: 1px solid #009900; }
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .toast-error {
+            background-color: #fce4e4;
+            color: #cc0000;
+            border: 1px solid #cc0000;
+        }
+
+        .toast-success {
+            background-color: #e6ffe6;
+            color: #009900;
+            border: 1px solid #009900;
+        }
+
+        .toast-info {
+            background-color: #EBF5FB;
+            color: #2094D0;
+            border: 1px solid #2094D0;
+        }
 
         #settings-modal {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: white; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 1000;
-            border-radius: 12px; border: 2px solid #2094D0; width: 320px;
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+            border-radius: 12px;
+            border: 2px solid #2094D0;
+            width: 320px;
         }
-        #settings-modal h3 { color: #2094D0; margin-top: 0; }
-        #settings-modal input, #settings-modal select { color: #2D3748; border: 1px solid #CBD5E0; border-radius: 6px; }
-        #settings-modal button { background-color: #2094D0; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; transition: background 0.3s; }
-        #settings-modal button:hover { background: #1A7BAE; }
+
+        #settings-modal h3 {
+            color: #2094D0;
+            margin-top: 0;
+        }
+
+        #settings-modal input, #settings-modal select {
+            color: #2D3748;
+            border: 1px solid #CBD5E0;
+            border-radius: 6px;
+        }
+
+        #settings-modal button {
+            background-color: #2094D0;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+        }
+
+        #settings-modal button:hover {
+            background: #1A7BAE;
+        }
     </style>
 </head>
 <body>
@@ -181,7 +508,7 @@
         <div id="chat-window"></div>
         <div id="input-container">
             <div class="input-wrapper">
-                <select id="chatCategory" class="category-select">
+                <select id="chatCategory" class="category-select" onchange="handleCategoryDropdownChange(event)">
                     <option value="Werk & school">💼 Werk & school</option>
                     <option value="Privé">🏠 Privé</option>
                 </select>
@@ -195,7 +522,7 @@
     </div>
 
     <div id="settings-modal">
-        <h3 style="color:#2094D0; margin-top:0;">Instellingen</h3>
+        <h3>Instellingen</h3>
         
         <label style="font-size:12px; font-weight:bold;">Gemini API Key:</label>
         <input type="password" id="geminiKey" style="width:100%; margin-bottom:10px; padding:8px; box-sizing:border-box;">
@@ -223,12 +550,19 @@
     </div>
 
     <script>
-        const CONFIG = { OUTPUT_TOKENS: 4096 };
+        // --- MODULE: CONFIGURATIE ---
+        const CONFIG = { 
+            OUTPUT_TOKENS: 4096 
+        };
+        const SCHEMA_VERSION = 2;
         
         const WORKFLOW_STEPS_TEXTS = {
-            CLAUDE_BUSY: 'Claude denkt na...', CLAUDE_DONE: 'Claude heeft nagedacht',
-            GEMINI_BUSY: 'Gemini controleert...', GEMINI_DONE: 'Gemini heeft gecontroleerd',
-            OPTIMIZE_BUSY: 'Claude optimaliseert...', OPTIMIZE_DONE: 'Claude heeft geoptimaliseerd'
+            CLAUDE_BUSY: 'Claude denkt na...', 
+            CLAUDE_DONE: 'Claude heeft nagedacht',
+            GEMINI_BUSY: 'Gemini controleert...', 
+            GEMINI_DONE: 'Gemini heeft gecontroleerd',
+            OPTIMIZE_BUSY: 'Claude optimaliseert...', 
+            OPTIMIZE_DONE: 'Claude heeft geoptimaliseerd'
         };
 
         const PROMPTS = {
@@ -244,50 +578,148 @@
 
         let currentChatId = null;
         let abortController = null;
-        let collapsedCategories = new Set(); // Slaat op welke menu's dichtgeklapt zijn
+        
+        // Persistent inklap-geheugen via LocalStorage
+        let collapsedCategories = new Set(JSON.parse(localStorage.getItem('collapsed_categories') || '[]'));
 
+        // --- MODULE: STORAGE SERVICE MET INTELLIGENTE CACHE & ATOMAIRE UPDATE ---
         const StorageService = {
-            async getChats() { return JSON.parse(localStorage.getItem('webbre_chats') || '[]'); },
+            _cache: null,
+            _cacheTimestamp: 0,
+            CACHE_TTL: 5000, // 5 seconden in-memory caching ter voorbereiding op Firebase latency
+
+            async getChats(forceRefresh = false) {
+                const now = Date.now();
+                if (!forceRefresh && this._cache && (now - this._cacheTimestamp) < this.CACHE_TTL) {
+                    return this._cache;
+                }
+                this._cache = JSON.parse(localStorage.getItem('webbre_chats') || '[]');
+                this._cacheTimestamp = now;
+                return this._cache;
+            },
+
+            async saveAllChats(chats) {
+                try {
+                    localStorage.setItem('webbre_chats', JSON.stringify(chats));
+                    this._cache = chats;
+                    this._cacheTimestamp = Date.now();
+                } catch (e) {
+                    showToast('Lokale opslag vol. Verwijder oude chats om door te gaan.', 'error');
+                    console.error("Fout bij opslaan chats:", e);
+                }
+            },
+
             async saveChat(updatedChat) {
-                const chats = await this.getChats();
+                const chats = await this.getChats(true);
                 const index = chats.findIndex(c => c.id === updatedChat.id);
                 updatedChat.updatedAt = Date.now();
-                if (index !== -1) { chats[index] = { ...chats[index], ...updatedChat }; } 
-                else { chats.push(updatedChat); }
-                localStorage.setItem('webbre_chats', JSON.stringify(chats));
+                
+                if (index !== -1) {
+                    chats[index] = { ...chats[index], ...updatedChat };
+                } else {
+                    chats.push(updatedChat);
+                }
+                await this.saveAllChats(chats);
             },
-            async getSetting(k) { return localStorage.getItem(k); },
-            async setSetting(k, v) { localStorage.setItem(k, v); }
+
+            // Fix voor Race Condition: Atomaire update van één specifiek veld (zoals title of category)
+            async updateChatField(chatId, field, value) {
+                const chats = await this.getChats(true);
+                const index = chats.findIndex(c => c.id === chatId);
+                if (index !== -1) {
+                    chats[index][field] = value;
+                    chats[index].updatedAt = Date.now();
+                    await this.saveAllChats(chats);
+                }
+            },
+
+            async getSetting(key) { 
+                return localStorage.getItem(key); 
+            },
+
+            async setSetting(key, value) { 
+                localStorage.setItem(key, value); 
+            }
         };
 
+        // --- MODULE: DATA MIGRATIE STRATEGIE (Herstelt je missende data!) ---
+        async function runMigrations() {
+            const storedVersion = parseInt(await StorageService.getSetting('webbre_schema_version') || '0');
+            if (storedVersion >= SCHEMA_VERSION) return;
+            
+            const chats = await StorageService.getChats(true);
+            let changed = false;
+            
+            chats.forEach(c => {
+                // Normaliseer oude categorieën naar de nieuwe kleine 's' standaard
+                if (!c.category || c.category === 'Werk & School') { 
+                    c.category = 'Werk & school'; 
+                    changed = true; 
+                }
+                if (typeof c.pinned !== 'boolean') { 
+                    c.pinned = false; 
+                    changed = true; 
+                }
+                if (!c.createdAt) { 
+                    c.createdAt = (typeof c.id === 'number') ? c.id : Date.now(); 
+                    changed = true; 
+                }
+                if (!c.updatedAt) { 
+                    c.updatedAt = c.createdAt; 
+                    changed = true; 
+                }
+                if (!c.date) {
+                    c.date = new Date(c.createdAt).toLocaleDateString('nl-NL');
+                    changed = true;
+                }
+            });
+            
+            if (changed) {
+                localStorage.setItem('webbre_chats', JSON.stringify(chats));
+            }
+            await StorageService.setSetting('webbre_schema_version', SCHEMA_VERSION.toString());
+        }
+
+        // --- MODULE: UI HELPERS ---
         function getWelcomeScreenHTML() {
-            return `<div class="welcome-container"><div class="welcome-title">Ewout's Optimum AI LLM</div><div class="welcome-subtitle">De denkkracht van Claude en Gemini gebundeld</div></div>`;
+            return `
+                <div class="welcome-container">
+                    <div class="welcome-title">Ewout's Optimum AI LLM</div>
+                    <div class="welcome-subtitle">De denkkracht van Claude en Gemini gebundeld</div>
+                </div>
+            `;
         }
 
         function showToast(message, type = 'error') {
-            let container = document.getElementById('toast-container') || (() => { const div = document.createElement('div'); div.id = 'toast-container'; document.body.appendChild(div); return div; })();
-            const toast = document.createElement('div'); toast.className = `toast toast-${type}`; toast.innerText = message;
+            let container = document.getElementById('toast-container') || (() => { 
+                const div = document.createElement('div'); 
+                div.id = 'toast-container'; 
+                document.body.appendChild(div); 
+                return div; 
+            })();
+            const toast = document.createElement('div'); 
+            toast.className = `toast toast-${type}`; 
+            toast.innerText = message;
             container.appendChild(toast);
             setTimeout(() => toast.style.opacity = '1', 10);
-            setTimeout(() => { toast.style.opacity = '0'; toast.addEventListener('transitionend', () => toast.remove()); }, 4000);
+            setTimeout(() => { 
+                toast.style.opacity = '0'; 
+                toast.addEventListener('transitionend', () => toast.remove()); 
+            }, 4000);
         }
 
+        // Initialisatie
         window.onload = async () => {
             document.getElementById('chat-window').innerHTML = getWelcomeScreenHTML();
-            await loadKeys(); await updateHistoryDisplay();
+            await loadKeys(); 
+            await runMigrations(); // Draai migraties vóór de render van de geschiedenis!
+            await updateHistoryDisplay();
             
-            document.getElementById('userPrompt').addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); startWorkflow(); } });
-            
-            document.getElementById('chatCategory').addEventListener('change', async (e) => {
-                if (currentChatId) {
-                    const chats = await StorageService.getChats();
-                    const chatIndex = chats.findIndex(c => c.id === currentChatId);
-                    if (chatIndex !== -1) {
-                        chats[chatIndex].category = e.target.value;
-                        await StorageService.saveChat(chats[chatIndex]);
-                        await updateHistoryDisplay();
-                    }
-                }
+            document.getElementById('userPrompt').addEventListener('keydown', e => { 
+                if (e.key === 'Enter' && !e.shiftKey) { 
+                    e.preventDefault(); 
+                    startWorkflow(); 
+                } 
             });
         };
 
@@ -305,11 +737,21 @@
                 await StorageService.setSetting('webbreGeminiModel', document.getElementById('geminiModel').value);
                 await StorageService.setSetting('webbreClaude', document.getElementById('claudeKey').value.trim());
                 await StorageService.setSetting('webbreClaudeModel', document.getElementById('claudeModel').value);
-                m.style.display = 'none'; showToast('Opgeslagen', 'success');
-            } else { m.style.display = 'block'; }
+                m.style.display = 'none'; 
+                showToast('Opgeslagen', 'success');
+            } else { 
+                m.style.display = 'block'; 
+            }
         }
 
-        // --- MODULE: HISTORY MET INKLAPBARE CATEGORIEEN ---
+        async function handleCategoryDropdownChange(event) {
+            if (currentChatId) {
+                await StorageService.updateChatField(currentChatId, 'category', event.target.value);
+                await updateHistoryDisplay();
+            }
+        }
+
+        // --- MODULE: HISTORY MET INKLAPBARE CATEGORIEEN & DATUMS ---
         function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
             if (chatsArray.length === 0) return;
             
@@ -319,19 +761,18 @@
             
             header.innerHTML = `<span>${title}</span><span class="chevron ${isCollapsed ? 'collapsed' : ''}">▼</span>`;
             
-            // Klik event voor in/uitklappen
             header.onclick = () => {
                 if (collapsedCategories.has(categoryId)) {
                     collapsedCategories.delete(categoryId);
                 } else {
                     collapsedCategories.add(categoryId);
                 }
+                localStorage.setItem('collapsed_categories', JSON.stringify([...collapsedCategories]));
                 updateHistoryDisplay();
             };
             
             listElement.appendChild(header);
 
-            // Alleen de items tekenen als hij NIET is dichtgeklapt
             if (!isCollapsed) {
                 const container = document.createElement('div');
                 chatsArray.sort((a,b) => (b.updatedAt || b.id) - (a.updatedAt || a.id)).forEach(c => {
@@ -345,12 +786,12 @@
             const chats = await StorageService.getChats();
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const filtered = query ? chats.filter(c => c.title?.toLowerCase().includes(query) || c.messages?.some(m => m.content?.toLowerCase().includes(query))) : chats;
-            const list = document.getElementById('history-list'); list.innerHTML = '';
+            const list = document.getElementById('history-list'); 
+            list.innerHTML = '';
             
             const pinned = filtered.filter(c => c.pinned);
             const unpinned = filtered.filter(c => !c.pinned);
             
-            // Fallback voor oude "Werk & School" (met grote S) is hier meegenomen
             const werkChats = unpinned.filter(c => c.category === 'Werk & school' || c.category === 'Werk & School');
             const priveChats = unpinned.filter(c => c.category !== 'Werk & school' && c.category !== 'Werk & School');
 
@@ -360,64 +801,167 @@
         }
 
         function createHistoryElement(chat) {
-            const item = document.createElement('div'); item.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
+            const item = document.createElement('div'); 
+            item.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
             item.onclick = () => loadChat(chat.id);
-            const t = document.createElement('span'); t.className = 'chat-title-text'; t.innerText = chat.title || 'Nieuwe chat';
-            const p = document.createElement('button'); p.className = `pin-btn ${chat.pinned ? 'pinned' : ''}`; p.innerText = '📌';
-            p.onclick = async (e) => { e.stopPropagation(); chat.pinned = !chat.pinned; await StorageService.saveChat(chat); updateHistoryDisplay(); };
-            item.appendChild(t); item.appendChild(p); return item;
+            
+            const t = document.createElement('span'); 
+            t.className = 'chat-title-text'; 
+            
+            // Render de titel én zet de datum er netjes bij terug
+            const dateDisplay = chat.date ? ` (${chat.date})` : '';
+            t.innerText = (chat.title || 'Nieuwe chat') + dateDisplay;
+            
+            const p = document.createElement('button'); 
+            p.className = `pin-btn ${chat.pinned ? 'pinned' : ''}`; 
+            p.innerText = '📌';
+            p.onclick = async (e) => { 
+                e.stopPropagation(); 
+                chat.pinned = !chat.pinned; 
+                await StorageService.saveChat(chat); 
+                updateHistoryDisplay(); 
+            };
+            
+            item.appendChild(t); 
+            item.appendChild(p); 
+            return item;
         }
 
         async function loadChat(id) {
-            currentChatId = id; const chats = await StorageService.getChats(); const chat = chats.find(c => c.id === id);
-            const win = document.getElementById('chat-window'); win.innerHTML = '';
+            currentChatId = id; 
+            const chats = await StorageService.getChats(); 
+            const chat = chats.find(c => c.id === id);
+            const win = document.getElementById('chat-window'); 
+            win.innerHTML = '';
             
             if (chat) {
-                // Update dropdown naar juiste categorie (of Privé als fallback)
-                document.getElementById('chatCategory').value = chat.category === 'Werk & School' ? 'Werk & school' : (chat.category || 'Privé');
+                document.getElementById('chatCategory').value = (chat.category === 'Werk & School') ? 'Werk & school' : (chat.category || 'Privé');
                 chat.messages.forEach(m => appendMessage(m.role, m.content, false));
+                
+                // Fix van Claude: Scroll direct naar de bodem bij het laden van een oude chat
+                win.scrollTop = win.scrollHeight;
             }
             updateHistoryDisplay();
         }
 
         function appendMessage(role, content, autoScroll = true) {
             const win = document.getElementById('chat-window');
-            const welcome = win.querySelector('.welcome-container'); if (welcome) welcome.remove();
+            const welcome = win.querySelector('.welcome-container'); 
+            if (welcome) welcome.remove();
+            
             const div = document.createElement('div');
+            
+            // Robuuste rol-validatie van Claude ter voorbereiding op dataopslag
             if (role === 'steps') {
                 div.className = 'workflow-steps';
-                content.forEach(s => { const sd = document.createElement('div'); sd.className = 'workflow-step'; sd.innerHTML = s; div.appendChild(sd); });
+                content.forEach(s => { 
+                    const sd = document.createElement('div'); 
+                    sd.className = 'workflow-step'; 
+                    sd.innerHTML = s; 
+                    div.appendChild(sd); 
+                });
             } else if (role === 'ai') {
-                div.className = 'message ai-message'; div.innerHTML = DOMPurify.sanitize(marked.parse(content));
+                div.className = 'message ai-message'; 
+                div.innerHTML = DOMPurify.sanitize(marked.parse(content));
+            } else if (role === 'user') {
+                div.className = 'message user-message'; 
+                div.innerText = content;
+            } else if (role === 'error') {
+                div.className = 'message error-message'; 
+                div.innerText = content;
             } else {
-                div.className = `message ${role === 'user' ? 'user-message' : 'error-message'}`; div.innerText = content;
+                console.warn('Onbekende message role gedetecteerd:', role);
+                return null;
             }
+            
             win.appendChild(div);
             if (autoScroll) win.scrollTop = win.scrollHeight;
             return div;
         }
 
+        // --- MODULE: API HELPERS MET ROBUUSTE ERROR-HANDLING ---
         async function callClaude(messages, signal) {
             const key = await StorageService.getSetting('webbreClaude');
             const model = await StorageService.getSetting('webbreClaudeModel') || 'claude-opus-4-7';
-            const res = await fetch("https://api.anthropic.com/v1/messages", {
-                method: "POST", headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true" },
-                body: JSON.stringify({ model, max_tokens: CONFIG.OUTPUT_TOKENS, messages }), signal
-            });
-            if (!res.ok) throw new Error(`Claude Fout: ${res.status}`);
-            const data = await res.json(); return data.content[0].text;
+            
+            try {
+                const res = await fetch("https://api.anthropic.com/v1/messages", {
+                    method: "POST", 
+                    headers: { 
+                        "x-api-key": key, 
+                        "anthropic-version": "2023-06-01", 
+                        "content-type": "application/json", 
+                        "anthropic-dangerous-direct-browser-access": "true" 
+                    },
+                    body: JSON.stringify({ model, max_tokens: CONFIG.OUTPUT_TOKENS, messages }), 
+                    signal
+                });
+                
+                if (!res.ok) {
+                    if (res.status === 401 || res.status === 403) {
+                        throw new Error('Je Claude API-key is ongeldig of de permissies zijn onvoldoende. Controleer deze in de instellingen.');
+                    }
+                    if (res.status === 429) {
+                        throw new Error('Je hebt het Claude rate-limit bereikt. Wacht even en probeer het opnieuw.');
+                    }
+                    if (res.status >= 500) {
+                        throw new Error(`Claude server-probleem (${res.status}). Probeer het over een paar minuten opnieuw.`);
+                    }
+                    throw new Error(`Claude API Fout statuscode: ${res.status}`);
+                }
+                
+                const data = await res.json(); 
+                return data.content[0].text;
+            } catch (e) {
+                if (e.name === 'AbortError') throw e;
+                if (e.message.includes('Failed to fetch')) {
+                    throw new Error('Kan geen verbinding maken met de Claude API. Controleer je internetverbinding of ad-blocker.');
+                }
+                throw e;
+            }
         }
 
         async function callGemini(prompt, signal) {
             const key = await StorageService.getSetting('webbreGemini');
-            const model = await StorageService.getSetting('webbreGeminiModel') || 'gemini-2.5-pro';
+            const model = await StorageService.getSetting('webbreTriModel') || await StorageService.getSetting('webbreGeminiModel') || 'gemini-2.5-pro';
+            
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-            const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }), signal });
-            if (!res.ok) throw new Error(`Gemini Fout: ${res.status}`);
-            const data = await res.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            if (!text) throw new Error('Geen antwoord van Gemini.');
-            return text;
+            
+            try {
+                const res = await fetch(url, { 
+                    method: "POST", 
+                    headers: { "Content-Type": "application/json" }, 
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }), 
+                    signal 
+                });
+                
+                if (!res.ok) {
+                    if (res.status === 400) {
+                        throw new Error('Gemini weigert de prompt (mogelijk een ongeldig model geselecteerd).');
+                    }
+                    if (res.status === 401 || res.status === 403) {
+                        throw new Error('Je Gemini API-key is ongeldig. Controleer deze in de instellingen.');
+                    }
+                    if (res.status === 429) {
+                        throw new Error('Je hebt het Gemini rate-limit bereikt. Wacht even.');
+                    }
+                    if (res.status >= 500) {
+                        throw new Error(`Gemini server-probleem (${res.status}). Probeer het zo meteen opnieuw.`);
+                    }
+                    throw new Error(`Gemini API Fout statuscode: ${res.status}`);
+                }
+                
+                const data = await res.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                if (!text) throw new Error('Geen bruikbaar antwoord ontvangen van Gemini (veiligheidsfilter geraakt).');
+                return text;
+            } catch (e) {
+                if (e.name === 'AbortError') throw e;
+                if (e.message.includes('Failed to fetch')) {
+                    throw new Error('Kan geen verbinding maken met de Gemini API. Controleer je netwerk.');
+                }
+                throw e;
+            }
         }
 
         async function generateChatTitle(promptText, chatId) {
@@ -431,65 +975,103 @@
                     if (lines.length > 0) nieuweTitel = lines[lines.length - 1];
                 }
                 nieuweTitel = nieuweTitel.replace(/^["']|["']$/g, '');
-                const chats = await StorageService.getChats(); const c = chats.find(i => i.id === chatId);
-                if (c) { c.title = nieuweTitel; await StorageService.saveChat(c); updateHistoryDisplay(); }
-            } catch(e) { console.error(e); }
+                
+                // Fix van Claude: Update via updateChatField voorkomt overschrijven berichten-array!
+                await StorageService.updateChatField(chatId, 'title', nieuweTitel);
+                await updateHistoryDisplay();
+            } catch(e) { 
+                console.error("Titelgeneratie fout:", e); 
+            }
         }
 
         async function startNewChat() {
-            currentChatId = null; document.getElementById('search-input').value = ''; 
+            currentChatId = null; 
+            document.getElementById('search-input').value = ''; 
             document.getElementById('chat-window').innerHTML = getWelcomeScreenHTML();
-            document.getElementById('userPrompt').value = ''; updateHistoryDisplay();
+            document.getElementById('userPrompt').value = ''; 
+            await updateHistoryDisplay();
         }
 
+        // --- MODULE: HOOFD WORKFLOW ---
         async function startWorkflow() {
             if (abortController) { abortController.abort(); return; }
             const prompt = document.getElementById('userPrompt').value.trim();
             if (!prompt) return;
             
             if (!currentChatId) {
-                currentChatId = Date.now();
+                // Maak String ID ter voorbereiding op Firebase Firestore documenten
+                currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
                 const selectedCategory = document.getElementById('chatCategory').value;
+                
+                // userId: null netjes toegevoegd ten behoeve van Firebase Queries
                 await StorageService.saveChat({ 
                     id: currentChatId, 
+                    userId: null,
                     title: prompt.substring(0,20)+'...', 
                     category: selectedCategory,
+                    date: new Date().toLocaleDateString('nl-NL'),
                     createdAt: Date.now(), 
                     messages: [] 
                 });
                 generateChatTitle(prompt, currentChatId);
             }
             
-            abortController = new AbortController(); const signal = abortController.signal;
-            const btn = document.getElementById('sendBtn'); btn.innerText = 'Stop'; btn.classList.add('stop-btn');
-            const originalPrompt = prompt; appendMessage('user', prompt); document.getElementById('userPrompt').value = '';
-            const win = document.getElementById('chat-window'); const loader = document.createElement('div'); loader.className = 'workflow-steps'; win.appendChild(loader);
+            abortController = new AbortController(); 
+            const signal = abortController.signal;
+            const btn = document.getElementById('sendBtn'); 
+            btn.innerText = 'Stop'; 
+            btn.classList.add('stop-btn');
+            
+            const originalPrompt = prompt; 
+            appendMessage('user', prompt); 
+            document.getElementById('userPrompt').value = '';
+            
+            const win = document.getElementById('chat-window'); 
+            const loader = document.createElement('div'); 
+            loader.className = 'workflow-steps'; 
+            win.appendChild(loader);
 
             try {
-                const chats = await StorageService.getChats(); const chat = chats.find(c => c.id === currentChatId);
+                const chats = await StorageService.getChats(); 
+                const chat = chats.find(c => c.id === currentChatId);
                 const history = chat.messages.filter(m => m.role==='user'||m.role==='ai').map(m => ({ role: m.role==='ai'?'assistant':'user', content: m.content }));
                 
+                // STAP 1
                 loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_BUSY}</div>`;
                 const draft = await callClaude([...history, {role:'user', content: prompt}], signal);
                 
+                // STAP 2
                 loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.GEMINI_BUSY}</div>`;
                 const feedback = await callGemini(PROMPTS.GEMINI_REVIEW(prompt, draft), signal);
                 
+                // STAP 3
                 loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_BUSY}</div>`;
                 const final = await callClaude([{role:'user', content: PROMPTS.STRIKTE_REWRITE(prompt, draft, feedback)}], signal);
 
                 loader.remove();
                 const stappen = [`<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_DONE}`];
-                const sDiv = appendMessage('steps', stappen, false); appendMessage('ai', final, false);
+                const sDiv = appendMessage('steps', stappen, false); 
+                appendMessage('ai', final, false);
                 win.scrollTo({ top: sDiv.offsetTop - 20, behavior: 'smooth' });
 
                 chat.messages.push({ role: 'user', content: prompt }, { role: 'steps', content: stappen }, { role: 'ai', content: final });
-                await StorageService.saveChat(chat); updateHistoryDisplay();
+                await StorageService.saveChat(chat); 
+                await updateHistoryDisplay();
             } catch (e) {
                 loader.remove();
-                if (e.name === 'AbortError') { showToast('Gestopt', 'success'); document.getElementById('userPrompt').value = originalPrompt; }
-                else { showToast(e.message); appendMessage('error', e.message); }
-            } finally { abortController = null; btn.innerText = 'Verstuur'; btn.classList.remove('stop-btn'); }
+                if (e.name === 'AbortError') { 
+                    showToast('Gestopt', 'success'); 
+                    document.getElementById('userPrompt').value = originalPrompt; 
+                    appendMessage('error', 'Generatie gestopt. De prompt is teruggeplaatst.');
+                } else { 
+                    showToast(e.message); 
+                    appendMessage('error', e.message); 
+                }
+            } finally { 
+                abortController = null; 
+                btn.innerText = 'Verstuur'; 
+                btn.classList.remove('stop-btn'); 
+            }
         }
     </script>
 </body>
