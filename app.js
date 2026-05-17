@@ -3,6 +3,16 @@ import { WORKFLOW_STEPS_TEXTS, PROMPTS } from './config.js';
 import { StorageService, SettingsService } from './storage.js';
 import { callClaude, callGemini } from './api.js';
 
+// Google Authentication CDN inladen
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { firebaseConfig } from './config.js';
+
+// Initialiseer Auth
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+let globalUserId = null;
+
 let currentChatId = null;
 let abortController = null;
 let collapsedCategories = new Set(JSON.parse(localStorage.getItem('collapsed_categories') || '[]'));
@@ -35,9 +45,33 @@ function showToast(message, type = 'error') {
 window.onload = async () => {
     document.getElementById('chat-window').innerHTML = getWelcomeScreenHTML();
     await loadKeys(); 
-    await StorageService.migrateLocalToFirebase();
-    await updateHistoryDisplay();
     
+    // --- AUTHENTICATION MONITOR ---
+    // Google houdt hiermee constant in de gaten of je bent ingelogd
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // Gebruiker is ingelogd!
+            globalUserId = user.uid;
+            document.getElementById('auth-screen').style.display = 'none'; // Verberg inlogscherm
+            await StorageService.migrateLocalToFirebase();
+            await updateHistoryDisplay();
+        } else {
+            // Gebruiker is NIET ingelogd
+            globalUserId = null;
+            document.getElementById('auth-screen').style.display = 'flex'; // Toon inlogscherm
+            document.getElementById('history-list').innerHTML = ''; // Maak leeg
+        }
+    });
+    
+    // --- KABELTJES LISTENERS ---
+    document.getElementById('loginBtn').addEventListener('click', handleLogin);
+    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+    
+    // Enter-toets in het wachtwoordveld om in te loggen
+    document.getElementById('authPassword').addEventListener('keydown', e => {
+        if (e.key === 'Enter') handleLogin();
+    });
+
     document.getElementById('userPrompt').addEventListener('keydown', e => { 
         if (e.key === 'Enter' && !e.shiftKey) { 
             e.preventDefault(); 
@@ -54,14 +88,39 @@ window.onload = async () => {
         const sidebar = document.getElementById('sidebar');
         const btn = document.getElementById('menu-toggle');
         sidebar.classList.toggle('open');
-        
-        if (sidebar.classList.contains('open')) {
-            btn.innerHTML = '✖ Sluiten';
-        } else {
-            btn.innerHTML = '☰ Menu';
-        }
+        if (sidebar.classList.contains('open')) { btn.innerHTML = '✖ Sluiten'; } 
+        else { btn.innerHTML = '☰ Menu'; }
     });
 };
+
+// Inlog-functie
+async function handleLogin() {
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    
+    if (!email || !password) { showToast('Vul alle velden in'); return; }
+    
+    try {
+        const btn = document.getElementById('loginBtn');
+        btn.innerText = 'Bezig met inloggen...';
+        await signInWithEmailAndPassword(auth, email, password);
+        showToast('Succesvol ingelogd!', 'success');
+    } catch (error) {
+        console.error("Inlogfout:", error);
+        showToast('E-mailadres of wachtwoord is onjuist');
+    } finally {
+        document.getElementById('loginBtn').innerText = 'Inloggen';
+    }
+}
+
+// Uitlog-functie
+async function handleLogout() {
+    if (confirm('Weet je zeker dat je wilt uitloggen?')) {
+        await signOut(auth);
+        await startNewChat();
+        showToast('Je bent uitgelogd', 'info');
+    }
+}
 
 async function loadKeys() {
     document.getElementById('geminiKey').value = await SettingsService.getSetting('webbreGemini') || '';
@@ -77,11 +136,8 @@ async function toggleSettings() {
         await SettingsService.setSetting('webbreGeminiModel', document.getElementById('geminiModel').value);
         await SettingsService.setSetting('webbreClaude', document.getElementById('claudeKey').value.trim());
         await SettingsService.setSetting('webbreClaudeModel', document.getElementById('claudeModel').value);
-        m.style.display = 'none'; 
-        showToast('Instellingen opgeslagen', 'success');
-    } else { 
-        m.style.display = 'block'; 
-    }
+        m.style.display = 'none'; showToast('Instellingen opgeslagen', 'success');
+    } else { m.style.display = 'block'; }
 }
 
 async function handleCategoryDropdownChange(event) {
@@ -99,14 +155,12 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
     const isCollapsed = collapsedCategories.has(categoryId);
     
     header.innerHTML = `<span>${title}</span><span class="chevron ${isCollapsed ? 'collapsed' : ''}">▼</span>`;
-    
     header.onclick = () => {
         if (collapsedCategories.has(categoryId)) collapsedCategories.delete(categoryId);
         else collapsedCategories.add(categoryId);
         localStorage.setItem('collapsed_categories', JSON.stringify([...collapsedCategories]));
         updateHistoryDisplay();
     };
-    
     listElement.appendChild(header);
 
     if (!isCollapsed) {
@@ -126,21 +180,15 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
             });
 
             const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
-                if (a === 'Onbekende datum') return 1;
-                if (b === 'Onbekende datum') return -1;
-                const [dayA, monthA, yearA] = a.split('-');
-                const [dayB, monthB, yearB] = b.split('-');
-                const dateA = new Date(`${yearA}-${monthA}-${dayA}`);
-                const dateB = new Date(`${yearB}-${monthB}-${dayB}`);
-                return dateB - dateA;
+                if (a === 'Onbekende datum') return 1; if (b === 'Onbekende datum') return -1;
+                const [dayA, monthA, yearA] = a.split('-'); const [dayB, monthB, yearB] = b.split('-');
+                return new Date(`${yearB}-${monthB}-${dayB}`) - new Date(`${yearA}-${monthA}-${dayA}`);
             });
 
             for (const date of sortedDates) {
                 const dateHeader = document.createElement('div');
-                dateHeader.className = 'date-header';
-                dateHeader.innerText = date;
+                dateHeader.className = 'date-header'; dateHeader.innerText = date;
                 container.appendChild(dateHeader);
-                
                 groupedByDate[date].sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => {
                     container.appendChild(createHistoryElement(c));
                 });
@@ -151,13 +199,16 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
 }
 
 async function updateHistoryDisplay() {
+    if (!globalUserId) return; // Stop als we niet ingelogd zijn
+    
     const rawChats = await StorageService.getChats();
     const chats = [];
     
     for (const c of rawChats) {
         if ((!c.messages || c.messages.length === 0) && c.id !== currentChatId) {
             await StorageService.deleteChat(c.id);
-        } else {
+        } else if (c.userId === globalUserId || !c.userId) { 
+            // Toon alleen chats van JOUW account (of oude chats die nog geen ID hadden)
             chats.push(c);
         }
     }
@@ -189,10 +240,8 @@ function createHistoryElement(chat) {
     actions.className = 'history-actions';
 
     const p = document.createElement('button'); 
-    p.className = `action-btn pin-btn ${chat.pinned ? 'pinned' : ''}`; 
-    p.innerText = '📌';
+    p.className = `action-btn pin-btn ${chat.pinned ? 'pinned' : ''}`; p.innerText = '📌';
     p.title = chat.pinned ? 'Maak deze chat los' : 'Pin deze chat';
-    
     p.onclick = async (e) => { 
         e.stopPropagation(); await StorageService.updateChatField(chat.id, 'pinned', !chat.pinned); updateHistoryDisplay(); 
     };
@@ -208,10 +257,7 @@ function createHistoryElement(chat) {
         }
     };
     
-    actions.appendChild(p);
-    actions.appendChild(delBtn);
-    item.appendChild(t); 
-    item.appendChild(actions); 
+    actions.appendChild(p); actions.appendChild(delBtn); item.appendChild(t); item.appendChild(actions); 
     return item;
 }
 
@@ -225,29 +271,21 @@ async function loadChat(id) {
         document.getElementById('chatCategory').value = chat.category || 'Privé';
         chat.messages.forEach(m => appendMessage(m.role, m.content, false));
         win.scrollTop = win.scrollHeight;
-        
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('menu-toggle').innerHTML = '☰ Menu';
     }
-    
-    // VERBETERD: Maak het tekstvak netjes leeg als je een andere chat laadt
     document.getElementById('userPrompt').value = '';
-    
     updateHistoryDisplay();
 }
 
 function appendMessage(role, content, autoScroll = true) {
     const win = document.getElementById('chat-window');
-    const welcome = win.querySelector('.welcome-container'); 
-    if (welcome) welcome.remove();
-    
+    const welcome = win.querySelector('.welcome-container'); if (welcome) welcome.remove();
     const div = document.createElement('div');
     
     if (role === 'steps') {
         div.className = 'workflow-steps';
-        content.forEach(s => { 
-            const sd = document.createElement('div'); sd.className = 'workflow-step'; sd.innerHTML = s; div.appendChild(sd); 
-        });
+        content.forEach(s => { const sd = document.createElement('div'); sd.className = 'workflow-step'; sd.innerHTML = s; div.appendChild(sd); });
     } else if (role === 'ai') {
         div.className = 'message ai-message'; div.innerHTML = DOMPurify.sanitize(marked.parse(content));
     } else if (role === 'user') {
@@ -261,34 +299,25 @@ function appendMessage(role, content, autoScroll = true) {
     return div;
 }
 
-// VERBETERD: Vangnet toegevoegd voor titelgeneratie (Claude neemt over als Gemini faalt)
 async function generateChatTitle(promptText, chatId) {
     try { 
         let rawText = '';
-        try {
-            rawText = await callGemini(PROMPTS.TITEL(promptText), null);
-        } catch (geminiFout) {
-            console.warn("Gemini titel-generatie mislukt, Claude neemt over:", geminiFout);
+        try { rawText = await callGemini(PROMPTS.TITEL(promptText), null); } 
+        catch (geminiFout) {
+            console.warn("Gemini titel fout, Claude valt in:", geminiFout);
             rawText = await callClaude([{role: 'user', content: PROMPTS.TITEL(promptText)}], null);
         }
-
         let nieuweTitel = rawText;
         const match = rawText.match(/\[(.*?)\]/);
-        
-        if (match && match[1]) { 
-            nieuweTitel = match[1].trim(); 
-        } else {
+        if (match && match[1]) { nieuweTitel = match[1].trim(); } 
+        else {
             const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0 && !l.toUpperCase().includes('THOUGHT') && !l.startsWith('-'));
             if (lines.length > 0) nieuweTitel = lines[lines.length - 1];
         }
-        
         nieuweTitel = nieuweTitel.replace(/\[|\]/g, '').replace(/^["']|["']$/g, '').trim();
-        
         await StorageService.updateChatField(chatId, 'title', nieuweTitel);
         await updateHistoryDisplay();
-    } catch(e) { 
-        console.error("Titelgeneratie volledig gefaald:", e); 
-    }
+    } catch(e) { console.error("Titelgeneratie volledig gefaald:", e); }
 }
 
 async function startNewChat() {
@@ -312,8 +341,8 @@ async function startWorkflow() {
         
         await StorageService.saveChat({ 
             id: currentChatId, 
-            userId: null,
-            title: prompt.substring(0,25) + '...', // Tijdelijke titel tot AI hem overschrijft
+            userId: globalUserId, // BEVEILIGD: Chat koppelen aan jouw unieke Google-account ID!
+            title: prompt.substring(0,25) + '...', 
             category: selectedCategory,
             date: new Date().toLocaleDateString('nl-NL'),
             createdAt: Date.now(), 
@@ -325,13 +354,11 @@ async function startWorkflow() {
     abortController = new AbortController(); 
     const signal = abortController.signal;
     const btn = document.getElementById('sendBtn'); 
-    btn.innerText = 'Stop'; 
-    btn.classList.add('stop-btn');
+    btn.innerText = 'Stop'; btn.classList.add('stop-btn');
     
     const originalPrompt = prompt; 
     appendMessage('user', prompt); 
     document.getElementById('userPrompt').value = '';
-    
     const win = document.getElementById('chat-window'); 
     const loader = document.createElement('div'); loader.className = 'workflow-steps'; win.appendChild(loader);
 
@@ -363,11 +390,6 @@ async function startWorkflow() {
             showToast('Gestopt', 'info'); 
             document.getElementById('userPrompt').value = originalPrompt; 
             appendMessage('error', 'Generatie gestopt. De prompt is teruggeplaatst.');
-        } else { 
-            showToast(e.message); appendMessage('error', e.message); 
-        }
-    } finally { 
-        abortController = null; 
-        btn.innerText = 'Verstuur'; btn.classList.remove('stop-btn'); 
-    }
+        } else { showToast(e.message); appendMessage('error', e.message); }
+    } finally { abortController = null; btn.innerText = 'Verstuur'; btn.classList.remove('stop-btn'); }
 }
