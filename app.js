@@ -7,14 +7,12 @@ let currentChatId = null;
 let abortController = null;
 let collapsedCategories = new Set(JSON.parse(localStorage.getItem('collapsed_categories') || '[]'));
 
-// Globale functies beschikbaar maken voor de HTML (omdat we Modules gebruiken)
 window.startNewChat = startNewChat;
 window.updateHistoryDisplay = updateHistoryDisplay;
 window.toggleSettings = toggleSettings;
 window.startWorkflow = startWorkflow;
 window.handleCategoryDropdownChange = handleCategoryDropdownChange;
 
-// UI Helpers
 function getWelcomeScreenHTML() {
     return `
         <div class="welcome-container">
@@ -37,15 +35,9 @@ function showToast(message, type = 'error') {
 window.onload = async () => {
     document.getElementById('chat-window').innerHTML = getWelcomeScreenHTML();
     await loadKeys(); 
-    
-    // Check of we nog oude lokale chats naar Firebase moeten verhuizen
     await StorageService.migrateLocalToFirebase();
-    
     await updateHistoryDisplay();
     
-    // --- KABELTJES AANSLUITEN (Event Listeners) ---
-    
-    // 1. Enter-toets voor tekstvak
     document.getElementById('userPrompt').addEventListener('keydown', e => { 
         if (e.key === 'Enter' && !e.shiftKey) { 
             e.preventDefault(); 
@@ -53,13 +45,11 @@ window.onload = async () => {
         } 
     });
 
-    // 2. Knoppen in de chat en zijbalk
     document.getElementById('sendBtn').addEventListener('click', startWorkflow);
     document.getElementById('newChatBtn').addEventListener('click', startNewChat);
     document.getElementById('settingsLink').addEventListener('click', toggleSettings);
     document.getElementById('saveSettingsBtn').addEventListener('click', toggleSettings);
 
-    // 3. Hamburgermenu logica (Openen/Sluiten icoontje)
     document.getElementById('menu-toggle').addEventListener('click', () => {
         const sidebar = document.getElementById('sidebar');
         const btn = document.getElementById('menu-toggle');
@@ -101,7 +91,6 @@ async function handleCategoryDropdownChange(event) {
     }
 }
 
-// History & Weergave
 function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
     if (chatsArray.length === 0) return;
     
@@ -136,7 +125,6 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
                 groupedByDate[d].push(chat);
             });
 
-            // Sorteer datums: nieuwste bovenaan
             const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
                 if (a === 'Onbekende datum') return 1;
                 if (b === 'Onbekende datum') return -1;
@@ -153,7 +141,6 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
                 dateHeader.innerText = date;
                 container.appendChild(dateHeader);
                 
-                // Binnen een datum sorteren we ook op meest recent bewerkt
                 groupedByDate[date].sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => {
                     container.appendChild(createHistoryElement(c));
                 });
@@ -167,7 +154,6 @@ async function updateHistoryDisplay() {
     const rawChats = await StorageService.getChats();
     const chats = [];
     
-    // De Spook-chat Opruimdienst
     for (const c of rawChats) {
         if ((!c.messages || c.messages.length === 0) && c.id !== currentChatId) {
             await StorageService.deleteChat(c.id);
@@ -203,7 +189,11 @@ function createHistoryElement(chat) {
     actions.className = 'history-actions';
 
     const p = document.createElement('button'); 
-    p.className = `action-btn pin-btn ${chat.pinned ? 'pinned' : ''}`; p.innerText = '📌';
+    p.className = `action-btn pin-btn ${chat.pinned ? 'pinned' : ''}`; 
+    p.innerText = '📌';
+    // VERBETERD: Hover-tekst toegevoegd!
+    p.title = chat.pinned ? 'Maak deze chat los' : 'Pin deze chat';
+    
     p.onclick = async (e) => { 
         e.stopPropagation(); await StorageService.updateChatField(chat.id, 'pinned', !chat.pinned); updateHistoryDisplay(); 
     };
@@ -219,7 +209,10 @@ function createHistoryElement(chat) {
         }
     };
     
-    actions.appendChild(p);actions.appendChild(delBtn);item.appendChild(t); item.appendChild(actions); 
+    actions.appendChild(p);
+    actions.appendChild(delBtn);
+    item.appendChild(t); 
+    item.appendChild(actions); 
     return item;
 }
 
@@ -234,7 +227,6 @@ async function loadChat(id) {
         chat.messages.forEach(m => appendMessage(m.role, m.content, false));
         win.scrollTop = win.scrollHeight;
         
-        // Zorg dat mobiele zijbalk dichtklapt na kiezen chat
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('menu-toggle').innerHTML = '☰ Menu';
     }
@@ -266,7 +258,6 @@ function appendMessage(role, content, autoScroll = true) {
     return div;
 }
 
-// Genereer de korte titel via Gemini
 async function generateChatTitle(promptText, chatId) {
     try { 
         const rawText = await callGemini(PROMPTS.TITEL(promptText), null);
@@ -294,7 +285,6 @@ async function startNewChat() {
     await updateHistoryDisplay();
 }
 
-// Start the Magic
 async function startWorkflow() {
     if (abortController) { abortController.abort(); return; }
     const prompt = document.getElementById('userPrompt').value.trim();
