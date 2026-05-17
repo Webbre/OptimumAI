@@ -7,14 +7,12 @@ let currentChatId = null;
 let abortController = null;
 let collapsedCategories = new Set(JSON.parse(localStorage.getItem('collapsed_categories') || '[]'));
 
-// Globale functies beschikbaar maken voor de HTML (omdat we Modules gebruiken)
 window.startNewChat = startNewChat;
 window.updateHistoryDisplay = updateHistoryDisplay;
 window.toggleSettings = toggleSettings;
 window.startWorkflow = startWorkflow;
 window.handleCategoryDropdownChange = handleCategoryDropdownChange;
 
-// UI Helpers
 function getWelcomeScreenHTML() {
     return `
         <div class="welcome-container">
@@ -26,58 +24,35 @@ function getWelcomeScreenHTML() {
 
 function showToast(message, type = 'error') {
     let container = document.getElementById('toast-container') || (() => { 
-        const div = document.createElement('div'); 
-        div.id = 'toast-container'; 
-        document.body.appendChild(div); 
-        return div; 
+        const div = document.createElement('div'); div.id = 'toast-container'; document.body.appendChild(div); return div; 
     })();
-    const toast = document.createElement('div'); 
-    toast.className = `toast toast-${type}`; 
-    toast.innerText = message;
+    const toast = document.createElement('div'); toast.className = `toast toast-${type}`; toast.innerText = message;
     container.appendChild(toast);
     setTimeout(() => toast.style.opacity = '1', 10);
-    setTimeout(() => { 
-        toast.style.opacity = '0'; 
-        toast.addEventListener('transitionend', () => toast.remove()); 
-    }, 4000);
+    setTimeout(() => { toast.style.opacity = '0'; toast.addEventListener('transitionend', () => toast.remove()); }, 4000);
 }
 
 window.onload = async () => {
     document.getElementById('chat-window').innerHTML = getWelcomeScreenHTML();
     await loadKeys(); 
-    
-    // Check of we nog oude lokale chats naar Firebase moeten verhuizen
     await StorageService.migrateLocalToFirebase();
-    
     await updateHistoryDisplay();
     
-    // --- KABELTJES AANSLUITEN (Event Listeners) ---
-    
-    // 1. Enter-toets voor tekstvak
     document.getElementById('userPrompt').addEventListener('keydown', e => { 
-        if (e.key === 'Enter' && !e.shiftKey) { 
-            e.preventDefault(); 
-            startWorkflow(); 
-        } 
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); startWorkflow(); } 
     });
 
-    // 2. Knoppen in de chat en zijbalk
     document.getElementById('sendBtn').addEventListener('click', startWorkflow);
     document.getElementById('newChatBtn').addEventListener('click', startNewChat);
     document.getElementById('settingsLink').addEventListener('click', toggleSettings);
     document.getElementById('saveSettingsBtn').addEventListener('click', toggleSettings);
 
-    // 3. Hamburgermenu logica (Openen/Sluiten icoontje)
     document.getElementById('menu-toggle').addEventListener('click', () => {
         const sidebar = document.getElementById('sidebar');
         const btn = document.getElementById('menu-toggle');
         sidebar.classList.toggle('open');
-        
-        if (sidebar.classList.contains('open')) {
-            btn.innerHTML = '✖ Sluiten';
-        } else {
-            btn.innerHTML = '☰ Menu';
-        }
+        if (sidebar.classList.contains('open')) { btn.innerHTML = '✖ Sluiten'; } 
+        else { btn.innerHTML = '☰ Menu'; }
     });
 };
 
@@ -95,11 +70,8 @@ async function toggleSettings() {
         await SettingsService.setSetting('webbreGeminiModel', document.getElementById('geminiModel').value);
         await SettingsService.setSetting('webbreClaude', document.getElementById('claudeKey').value.trim());
         await SettingsService.setSetting('webbreClaudeModel', document.getElementById('claudeModel').value);
-        m.style.display = 'none'; 
-        showToast('Instellingen opgeslagen', 'success');
-    } else { 
-        m.style.display = 'block'; 
-    }
+        m.style.display = 'none'; showToast('Instellingen opgeslagen', 'success');
+    } else { m.style.display = 'block'; }
 }
 
 async function handleCategoryDropdownChange(event) {
@@ -109,23 +81,19 @@ async function handleCategoryDropdownChange(event) {
     }
 }
 
-// History & Weergave (Inclusief gefixte datums!)
 function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
     if (chatsArray.length === 0) return;
     
     const header = document.createElement('div');
     header.className = 'category-header';
     const isCollapsed = collapsedCategories.has(categoryId);
-    
     header.innerHTML = `<span>${title}</span><span class="chevron ${isCollapsed ? 'collapsed' : ''}">▼</span>`;
-    
     header.onclick = () => {
         if (collapsedCategories.has(categoryId)) collapsedCategories.delete(categoryId);
         else collapsedCategories.add(categoryId);
         localStorage.setItem('collapsed_categories', JSON.stringify([...collapsedCategories]));
         updateHistoryDisplay();
     };
-    
     listElement.appendChild(header);
 
     if (!isCollapsed) {
@@ -133,9 +101,7 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
         container.className = 'category-group-container';
         
         if (categoryId === 'pinned') {
-            chatsArray.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => {
-                container.appendChild(createHistoryElement(c));
-            });
+            chatsArray.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => { container.appendChild(createHistoryElement(c)); });
         } else {
             const groupedByDate = {};
             chatsArray.forEach(chat => {
@@ -144,27 +110,17 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
                 groupedByDate[d].push(chat);
             });
 
-            // Sorteer datums: nieuwste bovenaan
             const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
-                if (a === 'Onbekende datum') return 1;
-                if (b === 'Onbekende datum') return -1;
-                const [dayA, monthA, yearA] = a.split('-');
-                const [dayB, monthB, yearB] = b.split('-');
-                const dateA = new Date(`${yearA}-${monthA}-${dayA}`);
-                const dateB = new Date(`${yearB}-${monthB}-${dayB}`);
-                return dateB - dateA;
+                if (a === 'Onbekende datum') return 1; if (b === 'Onbekende datum') return -1;
+                const [dayA, monthA, yearA] = a.split('-'); const [dayB, monthB, yearB] = b.split('-');
+                return new Date(`${yearB}-${monthB}-${dayB}`) - new Date(`${yearA}-${monthA}-${dayA}`);
             });
 
             for (const date of sortedDates) {
                 const dateHeader = document.createElement('div');
-                dateHeader.className = 'date-header';
-                dateHeader.innerText = date;
+                dateHeader.className = 'date-header'; dateHeader.innerText = date;
                 container.appendChild(dateHeader);
-                
-                // Binnen een datum sorteren we ook op meest recent bewerkt
-                groupedByDate[date].sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => {
-                    container.appendChild(createHistoryElement(c));
-                });
+                groupedByDate[date].sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => { container.appendChild(createHistoryElement(c)); });
             }
         }
         listElement.appendChild(container);
@@ -172,11 +128,22 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
 }
 
 async function updateHistoryDisplay() {
-    const chats = await StorageService.getChats();
+    const rawChats = await StorageService.getChats();
+    const chats = [];
+    
+    // NIEUW: De Spook-chat Opruimdienst
+    for (const c of rawChats) {
+        // Als een chat leeg is én we zijn er niet actief in bezig: verwijder direct!
+        if ((!c.messages || c.messages.length === 0) && c.id !== currentChatId) {
+            await StorageService.deleteChat(c.id);
+        } else {
+            chats.push(c);
+        }
+    }
+
     const query = document.getElementById('search-input').value.toLowerCase().trim();
     const filtered = query ? chats.filter(c => c.title?.toLowerCase().includes(query) || c.messages?.some(m => m.content?.toLowerCase().includes(query))) : chats;
-    const list = document.getElementById('history-list'); 
-    list.innerHTML = '';
+    const list = document.getElementById('history-list'); list.innerHTML = '';
     
     const pinned = filtered.filter(c => c.pinned);
     const unpinned = filtered.filter(c => !c.pinned);
@@ -185,8 +152,8 @@ async function updateHistoryDisplay() {
     const priveChats = unpinned.filter(c => c.category !== 'Werk & school');
 
     renderCategoryGroup('📌 Vastgezet', pinned, 'pinned', list);
-    renderCategoryGroup('💼 Werk & school', werkChats, 'werk', list);
     renderCategoryGroup('🏠 Privé', priveChats, 'prive', list);
+    renderCategoryGroup('💼 Werk & school', werkChats, 'werk', list);
 }
 
 function createHistoryElement(chat) {
@@ -195,21 +162,35 @@ function createHistoryElement(chat) {
     item.onclick = () => loadChat(chat.id);
     
     const t = document.createElement('span'); 
-    t.className = 'chat-title-text'; 
-    t.innerText = chat.title || 'Nieuwe chat'; 
+    t.className = 'chat-title-text'; t.innerText = chat.title || 'Nieuwe chat'; 
     
+    // Actieknoppen container
+    const actions = document.createElement('div');
+    actions.className = 'history-actions';
+
+    // Punaise knop
     const p = document.createElement('button'); 
-    p.className = `pin-btn ${chat.pinned ? 'pinned' : ''}`; 
-    p.innerText = '📌';
-    
+    p.className = `action-btn pin-btn ${chat.pinned ? 'pinned' : ''}`; p.innerText = '📌';
     p.onclick = async (e) => { 
-        e.stopPropagation(); 
-        await StorageService.updateChatField(chat.id, 'pinned', !chat.pinned);
-        updateHistoryDisplay(); 
+        e.stopPropagation(); await StorageService.updateChatField(chat.id, 'pinned', !chat.pinned); updateHistoryDisplay(); 
+    };
+
+    // Prullenbak knop
+    const delBtn = document.createElement('button');
+    delBtn.className = 'action-btn delete-btn'; delBtn.innerText = '🗑️'; delBtn.title = 'Verwijder chat';
+    delBtn.onclick = async (e) => {
+        e.stopPropagation(); // Voorkomt dat de chat geopend wordt bij klikken op verwijderen
+        if (confirm('Weet je zeker dat je deze chat permanent wilt verwijderen?')) {
+            await StorageService.deleteChat(chat.id);
+            if (currentChatId === chat.id) await startNewChat();
+            else updateHistoryDisplay();
+        }
     };
     
+    actions.appendChild(p);
+    actions.appendChild(delBtn);
     item.appendChild(t); 
-    item.appendChild(p); 
+    item.appendChild(actions); 
     return item;
 }
 
@@ -217,44 +198,32 @@ async function loadChat(id) {
     currentChatId = id; 
     const chats = await StorageService.getChats(); 
     const chat = chats.find(c => c.id === id);
-    const win = document.getElementById('chat-window'); 
-    win.innerHTML = '';
+    const win = document.getElementById('chat-window'); win.innerHTML = '';
     
     if (chat) {
         document.getElementById('chatCategory').value = chat.category || 'Privé';
         chat.messages.forEach(m => appendMessage(m.role, m.content, false));
         win.scrollTop = win.scrollHeight;
-        
-        // Zorg dat mobiele zijbalk dichtklapt na kiezen chat
         document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('menu-toggle').innerHTML = '☰ Menu';
     }
     updateHistoryDisplay();
 }
 
 function appendMessage(role, content, autoScroll = true) {
     const win = document.getElementById('chat-window');
-    const welcome = win.querySelector('.welcome-container'); 
-    if (welcome) welcome.remove();
-    
+    const welcome = win.querySelector('.welcome-container'); if (welcome) welcome.remove();
     const div = document.createElement('div');
     
     if (role === 'steps') {
         div.className = 'workflow-steps';
-        content.forEach(s => { 
-            const sd = document.createElement('div'); 
-            sd.className = 'workflow-step'; 
-            sd.innerHTML = s; 
-            div.appendChild(sd); 
-        });
+        content.forEach(s => { const sd = document.createElement('div'); sd.className = 'workflow-step'; sd.innerHTML = s; div.appendChild(sd); });
     } else if (role === 'ai') {
-        div.className = 'message ai-message'; 
-        div.innerHTML = DOMPurify.sanitize(marked.parse(content));
+        div.className = 'message ai-message'; div.innerHTML = DOMPurify.sanitize(marked.parse(content));
     } else if (role === 'user') {
-        div.className = 'message user-message'; 
-        div.innerText = content;
+        div.className = 'message user-message'; div.innerText = content;
     } else if (role === 'error') {
-        div.className = 'message error-message'; 
-        div.innerText = content;
+        div.className = 'message error-message'; div.innerText = content;
     }
     
     win.appendChild(div);
@@ -262,7 +231,6 @@ function appendMessage(role, content, autoScroll = true) {
     return div;
 }
 
-// Genereer de korte titel via Gemini
 async function generateChatTitle(promptText, chatId) {
     try { 
         const rawText = await callGemini(PROMPTS.TITEL(promptText), null);
@@ -277,9 +245,7 @@ async function generateChatTitle(promptText, chatId) {
         
         await StorageService.updateChatField(chatId, 'title', nieuweTitel);
         await updateHistoryDisplay();
-    } catch(e) { 
-        console.error("Titelgeneratie fout:", e); 
-    }
+    } catch(e) { console.error("Titelgeneratie fout:", e); }
 }
 
 async function startNewChat() {
@@ -288,10 +254,10 @@ async function startNewChat() {
     document.getElementById('chat-window').innerHTML = getWelcomeScreenHTML();
     document.getElementById('userPrompt').value = ''; 
     document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('menu-toggle').innerHTML = '☰ Menu';
     await updateHistoryDisplay();
 }
 
-// Start the Magic
 async function startWorkflow() {
     if (abortController) { abortController.abort(); return; }
     const prompt = document.getElementById('userPrompt').value.trim();
@@ -316,17 +282,14 @@ async function startWorkflow() {
     abortController = new AbortController(); 
     const signal = abortController.signal;
     const btn = document.getElementById('sendBtn'); 
-    btn.innerText = 'Stop'; 
-    btn.classList.add('stop-btn');
+    btn.innerText = 'Stop'; btn.classList.add('stop-btn');
     
     const originalPrompt = prompt; 
     appendMessage('user', prompt); 
     document.getElementById('userPrompt').value = '';
     
     const win = document.getElementById('chat-window'); 
-    const loader = document.createElement('div'); 
-    loader.className = 'workflow-steps'; 
-    win.appendChild(loader);
+    const loader = document.createElement('div'); loader.className = 'workflow-steps'; win.appendChild(loader);
 
     try {
         const chats = await StorageService.getChats(); 
@@ -358,12 +321,10 @@ async function startWorkflow() {
             document.getElementById('userPrompt').value = originalPrompt; 
             appendMessage('error', 'Generatie gestopt. De prompt is teruggeplaatst.');
         } else { 
-            showToast(e.message); 
-            appendMessage('error', e.message); 
+            showToast(e.message); appendMessage('error', e.message); 
         }
     } finally { 
         abortController = null; 
-        btn.innerText = 'Verstuur'; 
-        btn.classList.remove('stop-btn'); 
+        btn.innerText = 'Verstuur'; btn.classList.remove('stop-btn'); 
     }
 }
