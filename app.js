@@ -5,12 +5,10 @@ import { callClaude, callGemini } from './api.js';
 
 // Google Authentication CDN inladen
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { firebaseConfig } from './config.js';
+import { getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
-// Initialiseer Auth
-const firebaseApp = initializeApp(firebaseConfig);
-const auth = getAuth(firebaseApp);
+// VERBETERD: We gebruiken getApp() in plaats van initializeApp() om conflicten te voorkomen!
+const auth = getAuth(getApp());
 let globalUserId = null;
 
 let currentChatId = null;
@@ -52,14 +50,14 @@ window.onload = async () => {
         if (user) {
             // Gebruiker is ingelogd!
             globalUserId = user.uid;
-            document.getElementById('auth-screen').style.display = 'none'; // Verberg inlogscherm
+            document.getElementById('auth-screen').style.display = 'none'; 
             await StorageService.migrateLocalToFirebase();
             await updateHistoryDisplay();
         } else {
             // Gebruiker is NIET ingelogd
             globalUserId = null;
-            document.getElementById('auth-screen').style.display = 'flex'; // Toon inlogscherm
-            document.getElementById('history-list').innerHTML = ''; // Maak leeg
+            document.getElementById('auth-screen').style.display = 'flex'; 
+            document.getElementById('history-list').innerHTML = ''; 
         }
     });
     
