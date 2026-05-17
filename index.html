@@ -36,7 +36,8 @@
         </div>
         <div id="history-list"></div>
         
-        <button id="logoutBtn" style="background:none; border:none; color:#718096; text-decoration:underline; font-size:12px; cursor:pointer; margin-top:auto; padding:5px; text-align:left; font-weight:bold;">Uitloggen</button>
+        <span class="api-keys-link" id="settingsLink" style="margin-top: auto; padding: 5px; font-size: 12px;">Instellingen (API & modellen)</span>
+        <button id="logoutBtn" style="background:none; border:none; color:#718096; text-decoration:underline; font-size:12px; cursor:pointer; padding:5px; text-align:left; font-weight:bold;">Uitloggen</button>
     </div>
 
     <div id="main-content">
@@ -48,8 +49,7 @@
                     <option value="Werk & school">💼 Werk & school</option>
                 </select>
                 <textarea id="userPrompt" rows="5" placeholder="Stel een vraag... (Shift + Enter voor een nieuwe regel)"></textarea>
-                <div class="controls">
-                    <span class="api-keys-link" id="settingsLink">Instellingen (API & modellen)</span>
+                <div class="controls" style="justify-content: flex-end;">
                     <button class="send-btn" id="sendBtn">Verstuur</button>
                 </div>
             </div>
