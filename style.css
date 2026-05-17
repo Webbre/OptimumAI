@@ -128,20 +128,31 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
 @media screen and (max-width: 768px) {
     body { flex-direction: column; }
     
-    #mobile-header { display: flex; }
+    #mobile-header { display: flex; z-index: 1001; position: relative; }
     
     #sidebar { 
-        display: none; /* Verborgen totdat menu-knop wordt geklikt */
+        display: none; 
+        position: fixed; /* Zorgt dat het over de chat heen valt */
+        top: 60px; /* Begint precies onder de mobiele header */
+        left: 0;
         width: 100%; 
+        height: calc(100vh - 60px); /* Vult de rest van het scherm */
+        max-height: none;
         border-right: none; 
-        border-bottom: 2px solid #E2E8F0;
-        max-height: 40vh; /* Maximaal 40% van het scherm als hij open staat */
+        z-index: 1000;
+        background-color: #EBF5FB;
     }
     
     #sidebar.open { display: flex; }
 
     #main-content { border-top: none; }
     
+    .input-wrapper { max-width: 100%; } /* Inputbalk volle breedte op mobiel */
+    .message { max-width: 95%; } /* Berichten iets breder op smalle schermen */
+    
+    .welcome-container { margin: 2vh 0 0 0; }
+    .welcome-title { font-size: 24px; }
+}
     .input-wrapper { max-width: 100%; } /* Inputbalk volle breedte op mobiel */
     .message { max-width: 95%; } /* Berichten iets breder op smalle schermen */
     
