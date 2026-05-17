@@ -32,12 +32,11 @@ body {
     display: flex;
     flex-direction: column;
     padding: 15px;
-    box-sizing: border-box; /* VERBETERD: Voorkomt dat padding de balk buiten beeld drukt */
+    box-sizing: border-box; 
     overflow-y: auto;
     z-index: 10;
 }
 
-/* VERBETERD: Dit zorgt voor de extra scroll-ruimte onder je chats */
 #history-list {
     padding-bottom: 50px; 
 }
@@ -154,9 +153,9 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
     
     #sidebar.open { display: flex; }
 
-    /* VERBETERD: Nog iets meer ruimte specifiek voor mobiel scrollen */
+    /* VERBETERD: De ruimte gehalveerd (was 120px, is nu 60px) voor een strakkere look */
     #history-list {
-        padding-bottom: 120px; 
+        padding-bottom: 60px; 
     }
 
     #main-content { 
