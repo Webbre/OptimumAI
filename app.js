@@ -7,16 +7,18 @@ let currentChatId = null;
 let abortController = null;
 let collapsedCategories = new Set(JSON.parse(localStorage.getItem('collapsed_categories') || '[]'));
 
+// Globale functies beschikbaar maken voor de HTML (omdat we Modules gebruiken)
 window.startNewChat = startNewChat;
 window.updateHistoryDisplay = updateHistoryDisplay;
 window.toggleSettings = toggleSettings;
 window.startWorkflow = startWorkflow;
 window.handleCategoryDropdownChange = handleCategoryDropdownChange;
 
+// UI Helpers
 function getWelcomeScreenHTML() {
     return `
         <div class="welcome-container">
-            <div class="welcome-title">Ewout's Optimum AI LLM</div>
+            <div class="welcome-title">Ewout's Optimum AI tool</div>
             <div class="welcome-subtitle">De denkkracht van Claude en Gemini gebundeld</div>
         </div>
     `;
@@ -35,24 +37,39 @@ function showToast(message, type = 'error') {
 window.onload = async () => {
     document.getElementById('chat-window').innerHTML = getWelcomeScreenHTML();
     await loadKeys(); 
+    
+    // Check of we nog oude lokale chats naar Firebase moeten verhuizen
     await StorageService.migrateLocalToFirebase();
+    
     await updateHistoryDisplay();
     
+    // --- KABELTJES AANSLUITEN (Event Listeners) ---
+    
+    // 1. Enter-toets voor tekstvak
     document.getElementById('userPrompt').addEventListener('keydown', e => { 
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); startWorkflow(); } 
+        if (e.key === 'Enter' && !e.shiftKey) { 
+            e.preventDefault(); 
+            startWorkflow(); 
+        } 
     });
 
+    // 2. Knoppen in de chat en zijbalk
     document.getElementById('sendBtn').addEventListener('click', startWorkflow);
     document.getElementById('newChatBtn').addEventListener('click', startNewChat);
     document.getElementById('settingsLink').addEventListener('click', toggleSettings);
     document.getElementById('saveSettingsBtn').addEventListener('click', toggleSettings);
 
+    // 3. Hamburgermenu logica (Openen/Sluiten icoontje)
     document.getElementById('menu-toggle').addEventListener('click', () => {
         const sidebar = document.getElementById('sidebar');
         const btn = document.getElementById('menu-toggle');
         sidebar.classList.toggle('open');
-        if (sidebar.classList.contains('open')) { btn.innerHTML = '✖ Sluiten'; } 
-        else { btn.innerHTML = '☰ Menu'; }
+        
+        if (sidebar.classList.contains('open')) {
+            btn.innerHTML = '✖ Sluiten';
+        } else {
+            btn.innerHTML = '☰ Menu';
+        }
     });
 };
 
@@ -70,8 +87,11 @@ async function toggleSettings() {
         await SettingsService.setSetting('webbreGeminiModel', document.getElementById('geminiModel').value);
         await SettingsService.setSetting('webbreClaude', document.getElementById('claudeKey').value.trim());
         await SettingsService.setSetting('webbreClaudeModel', document.getElementById('claudeModel').value);
-        m.style.display = 'none'; showToast('Instellingen opgeslagen', 'success');
-    } else { m.style.display = 'block'; }
+        m.style.display = 'none'; 
+        showToast('Instellingen opgeslagen', 'success');
+    } else { 
+        m.style.display = 'block'; 
+    }
 }
 
 async function handleCategoryDropdownChange(event) {
@@ -81,19 +101,23 @@ async function handleCategoryDropdownChange(event) {
     }
 }
 
+// History & Weergave
 function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
     if (chatsArray.length === 0) return;
     
     const header = document.createElement('div');
     header.className = 'category-header';
     const isCollapsed = collapsedCategories.has(categoryId);
+    
     header.innerHTML = `<span>${title}</span><span class="chevron ${isCollapsed ? 'collapsed' : ''}">▼</span>`;
+    
     header.onclick = () => {
         if (collapsedCategories.has(categoryId)) collapsedCategories.delete(categoryId);
         else collapsedCategories.add(categoryId);
         localStorage.setItem('collapsed_categories', JSON.stringify([...collapsedCategories]));
         updateHistoryDisplay();
     };
+    
     listElement.appendChild(header);
 
     if (!isCollapsed) {
@@ -101,7 +125,9 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
         container.className = 'category-group-container';
         
         if (categoryId === 'pinned') {
-            chatsArray.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => { container.appendChild(createHistoryElement(c)); });
+            chatsArray.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => {
+                container.appendChild(createHistoryElement(c));
+            });
         } else {
             const groupedByDate = {};
             chatsArray.forEach(chat => {
@@ -110,17 +136,27 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
                 groupedByDate[d].push(chat);
             });
 
+            // Sorteer datums: nieuwste bovenaan
             const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
-                if (a === 'Onbekende datum') return 1; if (b === 'Onbekende datum') return -1;
-                const [dayA, monthA, yearA] = a.split('-'); const [dayB, monthB, yearB] = b.split('-');
-                return new Date(`${yearB}-${monthB}-${dayB}`) - new Date(`${yearA}-${monthA}-${dayA}`);
+                if (a === 'Onbekende datum') return 1;
+                if (b === 'Onbekende datum') return -1;
+                const [dayA, monthA, yearA] = a.split('-');
+                const [dayB, monthB, yearB] = b.split('-');
+                const dateA = new Date(`${yearA}-${monthA}-${dayA}`);
+                const dateB = new Date(`${yearB}-${monthB}-${dayB}`);
+                return dateB - dateA;
             });
 
             for (const date of sortedDates) {
                 const dateHeader = document.createElement('div');
-                dateHeader.className = 'date-header'; dateHeader.innerText = date;
+                dateHeader.className = 'date-header';
+                dateHeader.innerText = date;
                 container.appendChild(dateHeader);
-                groupedByDate[date].sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => { container.appendChild(createHistoryElement(c)); });
+                
+                // Binnen een datum sorteren we ook op meest recent bewerkt
+                groupedByDate[date].sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => {
+                    container.appendChild(createHistoryElement(c));
+                });
             }
         }
         listElement.appendChild(container);
@@ -131,9 +167,8 @@ async function updateHistoryDisplay() {
     const rawChats = await StorageService.getChats();
     const chats = [];
     
-    // NIEUW: De Spook-chat Opruimdienst
+    // De Spook-chat Opruimdienst
     for (const c of rawChats) {
-        // Als een chat leeg is én we zijn er niet actief in bezig: verwijder direct!
         if ((!c.messages || c.messages.length === 0) && c.id !== currentChatId) {
             await StorageService.deleteChat(c.id);
         } else {
@@ -164,22 +199,19 @@ function createHistoryElement(chat) {
     const t = document.createElement('span'); 
     t.className = 'chat-title-text'; t.innerText = chat.title || 'Nieuwe chat'; 
     
-    // Actieknoppen container
     const actions = document.createElement('div');
     actions.className = 'history-actions';
 
-    // Punaise knop
     const p = document.createElement('button'); 
     p.className = `action-btn pin-btn ${chat.pinned ? 'pinned' : ''}`; p.innerText = '📌';
     p.onclick = async (e) => { 
         e.stopPropagation(); await StorageService.updateChatField(chat.id, 'pinned', !chat.pinned); updateHistoryDisplay(); 
     };
 
-    // Prullenbak knop
     const delBtn = document.createElement('button');
     delBtn.className = 'action-btn delete-btn'; delBtn.innerText = '🗑️'; delBtn.title = 'Verwijder chat';
     delBtn.onclick = async (e) => {
-        e.stopPropagation(); // Voorkomt dat de chat geopend wordt bij klikken op verwijderen
+        e.stopPropagation(); 
         if (confirm('Weet je zeker dat je deze chat permanent wilt verwijderen?')) {
             await StorageService.deleteChat(chat.id);
             if (currentChatId === chat.id) await startNewChat();
@@ -187,10 +219,7 @@ function createHistoryElement(chat) {
         }
     };
     
-    actions.appendChild(p);
-    actions.appendChild(delBtn);
-    item.appendChild(t); 
-    item.appendChild(actions); 
+    actions.appendChild(p);actions.appendChild(delBtn);item.appendChild(t); item.appendChild(actions); 
     return item;
 }
 
@@ -204,6 +233,8 @@ async function loadChat(id) {
         document.getElementById('chatCategory').value = chat.category || 'Privé';
         chat.messages.forEach(m => appendMessage(m.role, m.content, false));
         win.scrollTop = win.scrollHeight;
+        
+        // Zorg dat mobiele zijbalk dichtklapt na kiezen chat
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('menu-toggle').innerHTML = '☰ Menu';
     }
@@ -212,12 +243,16 @@ async function loadChat(id) {
 
 function appendMessage(role, content, autoScroll = true) {
     const win = document.getElementById('chat-window');
-    const welcome = win.querySelector('.welcome-container'); if (welcome) welcome.remove();
+    const welcome = win.querySelector('.welcome-container'); 
+    if (welcome) welcome.remove();
+    
     const div = document.createElement('div');
     
     if (role === 'steps') {
         div.className = 'workflow-steps';
-        content.forEach(s => { const sd = document.createElement('div'); sd.className = 'workflow-step'; sd.innerHTML = s; div.appendChild(sd); });
+        content.forEach(s => { 
+            const sd = document.createElement('div'); sd.className = 'workflow-step'; sd.innerHTML = s; div.appendChild(sd); 
+        });
     } else if (role === 'ai') {
         div.className = 'message ai-message'; div.innerHTML = DOMPurify.sanitize(marked.parse(content));
     } else if (role === 'user') {
@@ -231,6 +266,7 @@ function appendMessage(role, content, autoScroll = true) {
     return div;
 }
 
+// Genereer de korte titel via Gemini
 async function generateChatTitle(promptText, chatId) {
     try { 
         const rawText = await callGemini(PROMPTS.TITEL(promptText), null);
@@ -258,6 +294,7 @@ async function startNewChat() {
     await updateHistoryDisplay();
 }
 
+// Start the Magic
 async function startWorkflow() {
     if (abortController) { abortController.abort(); return; }
     const prompt = document.getElementById('userPrompt').value.trim();
@@ -282,7 +319,8 @@ async function startWorkflow() {
     abortController = new AbortController(); 
     const signal = abortController.signal;
     const btn = document.getElementById('sendBtn'); 
-    btn.innerText = 'Stop'; btn.classList.add('stop-btn');
+    btn.innerText = 'Stop'; 
+    btn.classList.add('stop-btn');
     
     const originalPrompt = prompt; 
     appendMessage('user', prompt); 
@@ -307,8 +345,7 @@ async function startWorkflow() {
 
         loader.remove();
         const stappen = [`<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_DONE}`];
-        const sDiv = appendMessage('steps', stappen, false); 
-        appendMessage('ai', final, false);
+        const sDiv = appendMessage('steps', stappen, false); appendMessage('ai', final, false);
         win.scrollTo({ top: sDiv.offsetTop - 20, behavior: 'smooth' });
 
         chat.messages.push({ role: 'user', content: prompt }, { role: 'steps', content: stappen }, { role: 'ai', content: final });
