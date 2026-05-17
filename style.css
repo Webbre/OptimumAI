@@ -24,7 +24,7 @@ body {
 #menu-toggle { background: #2094D0; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 14px; cursor: pointer; }
 
 #sidebar {
-    width: 260px;
+    width: 320px; /* VERBETERD: Bredere zijbalk voor desktop (was 260px) */
     background-color: #EBF5FB; 
     box-shadow: 2px 0 10px rgba(0,0,0,0.03);
     border-top: 5px solid #2094D0; 
@@ -153,7 +153,6 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
     
     #sidebar.open { display: flex; }
 
-    /* VERBETERD: De ruimte gehalveerd (was 120px, is nu 60px) voor een strakkere look */
     #history-list {
         padding-bottom: 60px; 
     }
