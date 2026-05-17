@@ -51,12 +51,33 @@ window.onload = async () => {
     
     await updateHistoryDisplay();
     
-    // Enter-toets koppelen aan verzenden
+    // --- KABELTJES AANSLUITEN (Event Listeners) ---
+    
+    // 1. Enter-toets voor tekstvak
     document.getElementById('userPrompt').addEventListener('keydown', e => { 
         if (e.key === 'Enter' && !e.shiftKey) { 
             e.preventDefault(); 
             startWorkflow(); 
         } 
+    });
+
+    // 2. Knoppen in de chat en zijbalk
+    document.getElementById('sendBtn').addEventListener('click', startWorkflow);
+    document.getElementById('newChatBtn').addEventListener('click', startNewChat);
+    document.getElementById('settingsLink').addEventListener('click', toggleSettings);
+    document.getElementById('saveSettingsBtn').addEventListener('click', toggleSettings);
+
+    // 3. Hamburgermenu logica (Openen/Sluiten icoontje)
+    document.getElementById('menu-toggle').addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        const btn = document.getElementById('menu-toggle');
+        sidebar.classList.toggle('open');
+        
+        if (sidebar.classList.contains('open')) {
+            btn.innerHTML = '✖ Sluiten';
+        } else {
+            btn.innerHTML = '☰ Menu';
+        }
     });
 };
 
