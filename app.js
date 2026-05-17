@@ -191,7 +191,6 @@ function createHistoryElement(chat) {
     const p = document.createElement('button'); 
     p.className = `action-btn pin-btn ${chat.pinned ? 'pinned' : ''}`; 
     p.innerText = '📌';
-    // VERBETERD: Hover-tekst toegevoegd!
     p.title = chat.pinned ? 'Maak deze chat los' : 'Pin deze chat';
     
     p.onclick = async (e) => { 
@@ -230,6 +229,10 @@ async function loadChat(id) {
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('menu-toggle').innerHTML = '☰ Menu';
     }
+    
+    // VERBETERD: Maak het tekstvak netjes leeg als je een andere chat laadt
+    document.getElementById('userPrompt').value = '';
+    
     updateHistoryDisplay();
 }
 
@@ -258,21 +261,34 @@ function appendMessage(role, content, autoScroll = true) {
     return div;
 }
 
+// VERBETERD: Vangnet toegevoegd voor titelgeneratie (Claude neemt over als Gemini faalt)
 async function generateChatTitle(promptText, chatId) {
     try { 
-        const rawText = await callGemini(PROMPTS.TITEL(promptText), null);
+        let rawText = '';
+        try {
+            rawText = await callGemini(PROMPTS.TITEL(promptText), null);
+        } catch (geminiFout) {
+            console.warn("Gemini titel-generatie mislukt, Claude neemt over:", geminiFout);
+            rawText = await callClaude([{role: 'user', content: PROMPTS.TITEL(promptText)}], null);
+        }
+
         let nieuweTitel = rawText;
         const match = rawText.match(/\[(.*?)\]/);
-        if (match && match[1]) { nieuweTitel = match[1].trim(); } 
-        else {
+        
+        if (match && match[1]) { 
+            nieuweTitel = match[1].trim(); 
+        } else {
             const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0 && !l.toUpperCase().includes('THOUGHT') && !l.startsWith('-'));
             if (lines.length > 0) nieuweTitel = lines[lines.length - 1];
         }
-        nieuweTitel = nieuweTitel.replace(/^["']|["']$/g, '');
+        
+        nieuweTitel = nieuweTitel.replace(/\[|\]/g, '').replace(/^["']|["']$/g, '').trim();
         
         await StorageService.updateChatField(chatId, 'title', nieuweTitel);
         await updateHistoryDisplay();
-    } catch(e) { console.error("Titelgeneratie fout:", e); }
+    } catch(e) { 
+        console.error("Titelgeneratie volledig gefaald:", e); 
+    }
 }
 
 async function startNewChat() {
@@ -297,7 +313,7 @@ async function startWorkflow() {
         await StorageService.saveChat({ 
             id: currentChatId, 
             userId: null,
-            title: prompt.substring(0,20)+'...', 
+            title: prompt.substring(0,25) + '...', // Tijdelijke titel tot AI hem overschrijft
             category: selectedCategory,
             date: new Date().toLocaleDateString('nl-NL'),
             createdAt: Date.now(), 
