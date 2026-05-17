@@ -35,6 +35,8 @@
             <input type="text" id="search-input" placeholder="Zoek in chats...">
         </div>
         <div id="history-list"></div>
+        
+        <button id="logoutBtn" style="background:none; border:none; color:#718096; text-decoration:underline; font-size:12px; cursor:pointer; margin-top:auto; padding:5px; text-align:left; font-weight:bold;">Uitloggen</button>
     </div>
 
     <div id="main-content">
@@ -75,6 +77,19 @@
             <option value="claude-haiku-4-5">Claude Haiku 4.5</option>
         </select>
         <button id="saveSettingsBtn">Sluiten en opslaan</button>
+    </div>
+
+    <div id="auth-screen">
+        <div class="auth-box">
+            <svg style="width:48px; height:48px; margin-bottom:10px;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 5 L20 50 L45 50 L35 95 L75 40 L50 40 Z" fill="#FFD700" stroke="#E6C200" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h2>Optimum AI tool</h2>
+            <p>Log in om toegang te krijgen</p>
+            <input type="email" id="authEmail" placeholder="E-mailadres">
+            <input type="password" id="authPassword" placeholder="Wachtwoord">
+            <button id="loginBtn">Inloggen</button>
+        </div>
     </div>
 
     <script type="module" src="app.js"></script>
