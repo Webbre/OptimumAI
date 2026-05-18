@@ -193,8 +193,6 @@ async function updateHistoryDisplay() {
     const chats = [];
     
     for (const c of rawChats) {
-        // We verwijderen niet meer agressief! We TONEN de chat alleen als hij berichten heeft 
-        // OF als het de actieve chat is waar we nu in werken.
         if ((c.messages && c.messages.length > 0) || c.id === currentChatId) {
             if (c.userId === globalUserId || !c.userId) { 
                 chats.push(c);
@@ -288,6 +286,7 @@ function appendMessage(role, content, autoScroll = true) {
     return div;
 }
 
+// CHIRURGISCHE UPDATE: We updaten nu uitsluitend het 'title' veld in de database
 async function generateChatTitle(promptText, chatId) {
     try { 
         let rawText = '';
@@ -304,14 +303,8 @@ async function generateChatTitle(promptText, chatId) {
         }
         nieuweTitel = nieuweTitel.replace(/\[|\]/g, '').replace(/^["']|["']$/g, '').trim();
         
-        const chats = await StorageService.getChats();
-        const currentChat = chats.find(c => c.id === chatId);
-        if (currentChat) {
-            currentChat.title = nieuweTitel;
-            await StorageService.saveChat(currentChat);
-        } else {
-            await StorageService.updateChatField(chatId, 'title', nieuweTitel);
-        }
+        // Vertel Firebase om alléén de titel te updaten (en blijf van de rest af!)
+        await StorageService.updateChatField(chatId, 'title', nieuweTitel);
         await updateHistoryDisplay();
     } catch(e) { console.error("Titelgeneratie gefaald:", e); }
 }
@@ -344,12 +337,9 @@ async function startWorkflow() {
     const loader = document.createElement('div'); loader.className = 'workflow-steps'; win.appendChild(loader);
 
     try {
-        let isNewChat = false;
-
-        // 1. NIEUWE CHAT AANMAKEN (Nu veilig in het try-blok)
+        // 1. NIEUWE CHAT AANMAKEN EN TITELGENERATOR STARTEN
         if (!currentChatId) {
             currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            isNewChat = true;
             const selectedCategory = document.getElementById('chatCategory').value || 'Privé';
             
             const newChatObject = { 
@@ -363,7 +353,10 @@ async function startWorkflow() {
             };
             
             await StorageService.saveChat(newChatObject);
-            await updateHistoryDisplay(); // Toon hem direct
+            await updateHistoryDisplay(); // Toon de tijdelijke titel direct
+            
+            // Start direct de titelgenerator in de achtergrond (let op: we gebruiken expres GEEN await)
+            generateChatTitle(prompt, currentChatId);
         }
 
         // 2. CHAT OPHALEN
@@ -402,14 +395,12 @@ async function startWorkflow() {
 
         // 4. BERICHTEN OPSLAAN
         chat.messages.push({ role: 'user', content: prompt }, { role: 'steps', content: stappen }, { role: 'ai', content: final });
-        await StorageService.saveChat(chat);
         
-        // 5. TITEL BEREKENEN (Pas helemaal aan het einde!)
-        if (isNewChat) {
-            await generateChatTitle(prompt, currentChatId);
-        } else {
-            await updateHistoryDisplay();
-        }
+        // Omdat de achtergrondtaak (titel) misschien de 'title' heeft aangepast, werken we hier ook met een chirurgische update voor alleen de berichten!
+        await StorageService.updateChatField(currentChatId, 'messages', chat.messages);
+        
+        // Refresh voor de zekerheid
+        await updateHistoryDisplay();
 
     } catch (e) {
         loader.remove();
