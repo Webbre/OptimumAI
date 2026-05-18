@@ -193,10 +193,12 @@ async function updateHistoryDisplay() {
     const chats = [];
     
     for (const c of rawChats) {
-        if ((!c.messages || c.messages.length === 0) && c.id !== currentChatId) {
-            await StorageService.deleteChat(c.id);
-        } else if (c.userId === globalUserId || !c.userId) { 
-            chats.push(c);
+        // We verwijderen niet meer agressief! We TONEN de chat alleen als hij berichten heeft 
+        // OF als het de actieve chat is waar we nu in werken.
+        if ((c.messages && c.messages.length > 0) || c.id === currentChatId) {
+            if (c.userId === globalUserId || !c.userId) { 
+                chats.push(c);
+            }
         }
     }
 
@@ -286,7 +288,6 @@ function appendMessage(role, content, autoScroll = true) {
     return div;
 }
 
-// STRIPTE REVOLUTIE: Deze functie draait nu pas nádat de berichten veilig zijn opgeslagen
 async function generateChatTitle(promptText, chatId) {
     try { 
         let rawText = '';
@@ -303,7 +304,6 @@ async function generateChatTitle(promptText, chatId) {
         }
         nieuweTitel = nieuweTitel.replace(/\[|\]/g, '').replace(/^["']|["']$/g, '').trim();
         
-        // Haal de meest actuele chat op (die nu al de berichten bevat) en update alléén de titel
         const chats = await StorageService.getChats();
         const currentChat = chats.find(c => c.id === chatId);
         if (currentChat) {
@@ -331,40 +331,42 @@ async function startWorkflow() {
     const prompt = document.getElementById('userPrompt').value.trim();
     if (!prompt) return;
     
-    let isNewChat = false;
+    const originalPrompt = prompt; 
+    document.getElementById('userPrompt').value = '';
 
-    // 1. DIRECT OPSLAAN EN TONEN BIJ NIEUWE CHAT
-    if (!currentChatId) {
-        currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        isNewChat = true;
-        const selectedCategory = document.getElementById('chatCategory').value || 'Privé';
-        
-        const newChatObject = { 
-            id: currentChatId, 
-            userId: globalUserId,
-            title: prompt.substring(0,22) + '...', 
-            category: selectedCategory,
-            date: new Date().toLocaleDateString('nl-NL'),
-            createdAt: Date.now(), 
-            messages: [] 
-        };
-        
-        await StorageService.saveChat(newChatObject);
-        await updateHistoryDisplay(); // Laat hem DIRECT zien in de linkerbalk met de tijdelijke titel!
-    }
-    
     abortController = new AbortController(); 
     const signal = abortController.signal;
     const btn = document.getElementById('sendBtn'); 
     btn.innerText = 'Stop'; btn.classList.add('stop-btn');
     
-    const originalPrompt = prompt; 
     appendMessage('user', prompt); 
-    document.getElementById('userPrompt').value = '';
     const win = document.getElementById('chat-window'); 
     const loader = document.createElement('div'); loader.className = 'workflow-steps'; win.appendChild(loader);
 
     try {
+        let isNewChat = false;
+
+        // 1. NIEUWE CHAT AANMAKEN (Nu veilig in het try-blok)
+        if (!currentChatId) {
+            currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            isNewChat = true;
+            const selectedCategory = document.getElementById('chatCategory').value || 'Privé';
+            
+            const newChatObject = { 
+                id: currentChatId, 
+                userId: globalUserId,
+                title: prompt.substring(0,22) + '...', 
+                category: selectedCategory,
+                date: new Date().toLocaleDateString('nl-NL'),
+                createdAt: Date.now(), 
+                messages: [] 
+            };
+            
+            await StorageService.saveChat(newChatObject);
+            await updateHistoryDisplay(); // Toon hem direct
+        }
+
+        // 2. CHAT OPHALEN
         const chats = await StorageService.getChats(); 
         let chat = chats.find(c => c.id === currentChatId);
         
@@ -379,9 +381,9 @@ async function startWorkflow() {
                 messages: [] 
             };
         }
-        
         if (!chat.messages) chat.messages = [];
 
+        // 3. AI MOTOR
         const history = chat.messages.filter(m => m.role==='user'||m.role==='ai').map(m => ({ role: m.role==='ai'?'assistant':'user', content: m.content }));
         
         loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_BUSY}</div>`;
@@ -398,13 +400,11 @@ async function startWorkflow() {
         const sDiv = appendMessage('steps', stappen, false); appendMessage('ai', final, false);
         win.scrollTo({ top: sDiv.offsetTop - 20, behavior: 'smooth' });
 
-        // Voeg de nieuwe berichten toe aan de lokale geschiedenis
+        // 4. BERICHTEN OPSLAAN
         chat.messages.push({ role: 'user', content: prompt }, { role: 'steps', content: stappen }, { role: 'ai', content: final });
-        
-        // Sla de chat op met alle berichten erin
         await StorageService.saveChat(chat);
         
-        // PAS NU: Als het een gloednieuwe chat was, gaan we NU pas de titel berekenen (veilig, zonder database-clashes)
+        // 5. TITEL BEREKENEN (Pas helemaal aan het einde!)
         if (isNewChat) {
             await generateChatTitle(prompt, currentChatId);
         } else {
@@ -417,6 +417,14 @@ async function startWorkflow() {
             showToast('Gestopt', 'info'); 
             document.getElementById('userPrompt').value = originalPrompt; 
             appendMessage('error', 'Generatie gestopt. De prompt is teruggeplaatst.');
-        } else { showToast(e.message); appendMessage('error', e.message); }
-    } finally { abortController = null; btn.innerText = 'Verstuur'; btn.classList.remove('stop-btn'); }
+        } else { 
+            console.error(e);
+            showToast(e.message); 
+            appendMessage('error', e.message); 
+        }
+    } finally { 
+        abortController = null; 
+        btn.innerText = 'Verstuur'; 
+        btn.classList.remove('stop-btn'); 
+    }
 }
