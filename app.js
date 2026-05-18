@@ -286,6 +286,7 @@ function appendMessage(role, content, autoScroll = true) {
     return div;
 }
 
+// STRIPTE REVOLUTIE: Deze functie draait nu pas nádat de berichten veilig zijn opgeslagen
 async function generateChatTitle(promptText, chatId) {
     try { 
         let rawText = '';
@@ -301,7 +302,16 @@ async function generateChatTitle(promptText, chatId) {
             if (lines.length > 0) nieuweTitel = lines[lines.length - 1];
         }
         nieuweTitel = nieuweTitel.replace(/\[|\]/g, '').replace(/^["']|["']$/g, '').trim();
-        await StorageService.updateChatField(chatId, 'title', nieuweTitel);
+        
+        // Haal de meest actuele chat op (die nu al de berichten bevat) en update alléén de titel
+        const chats = await StorageService.getChats();
+        const currentChat = chats.find(c => c.id === chatId);
+        if (currentChat) {
+            currentChat.title = nieuweTitel;
+            await StorageService.saveChat(currentChat);
+        } else {
+            await StorageService.updateChatField(chatId, 'title', nieuweTitel);
+        }
         await updateHistoryDisplay();
     } catch(e) { console.error("Titelgeneratie gefaald:", e); }
 }
@@ -321,20 +331,26 @@ async function startWorkflow() {
     const prompt = document.getElementById('userPrompt').value.trim();
     if (!prompt) return;
     
+    let isNewChat = false;
+
+    // 1. DIRECT OPSLAAN EN TONEN BIJ NIEUWE CHAT
     if (!currentChatId) {
         currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        isNewChat = true;
         const selectedCategory = document.getElementById('chatCategory').value || 'Privé';
         
-        await StorageService.saveChat({ 
+        const newChatObject = { 
             id: currentChatId, 
             userId: globalUserId,
-            title: prompt.substring(0,25) + '...', 
+            title: prompt.substring(0,22) + '...', 
             category: selectedCategory,
             date: new Date().toLocaleDateString('nl-NL'),
             createdAt: Date.now(), 
             messages: [] 
-        });
-        generateChatTitle(prompt, currentChatId);
+        };
+        
+        await StorageService.saveChat(newChatObject);
+        await updateHistoryDisplay(); // Laat hem DIRECT zien in de linkerbalk met de tijdelijke titel!
     }
     
     abortController = new AbortController(); 
@@ -352,12 +368,11 @@ async function startWorkflow() {
         const chats = await StorageService.getChats(); 
         let chat = chats.find(c => c.id === currentChatId);
         
-        // VEILIGHEIDSNET: Zorg dat het object altijd compleet is
         if (!chat) {
             chat = { 
                 id: currentChatId, 
                 userId: globalUserId,
-                title: prompt.substring(0,25) + '...', 
+                title: prompt.substring(0,22) + '...', 
                 category: document.getElementById('chatCategory').value || 'Privé',
                 date: new Date().toLocaleDateString('nl-NL'),
                 createdAt: Date.now(),
@@ -365,10 +380,7 @@ async function startWorkflow() {
             };
         }
         
-        // Garandeer dat messages een array is
-        if (!chat.messages) {
-            chat.messages = [];
-        }
+        if (!chat.messages) chat.messages = [];
 
         const history = chat.messages.filter(m => m.role==='user'||m.role==='ai').map(m => ({ role: m.role==='ai'?'assistant':'user', content: m.content }));
         
@@ -386,23 +398,19 @@ async function startWorkflow() {
         const sDiv = appendMessage('steps', stappen, false); appendMessage('ai', final, false);
         win.scrollTo({ top: sDiv.offsetTop - 20, behavior: 'smooth' });
 
-        // Voeg de nieuwe berichten toe
+        // Voeg de nieuwe berichten toe aan de lokale geschiedenis
         chat.messages.push({ role: 'user', content: prompt }, { role: 'steps', content: stappen }, { role: 'ai', content: final });
         
-        // VERKEERSREGELAAR: Haal de allerlaatste versie van de chat op uit Firebase voordat we opslaan
-        const updatedChats = await StorageService.getChats();
-        const latestChat = updatedChats.find(c => c.id === currentChatId);
+        // Sla de chat op met alle berichten erin
+        await StorageService.saveChat(chat);
         
-        if (latestChat) {
-            // Als de titel inmiddels is aangepast door Trein B, behouden we die, en voegen we alleen onze berichten toe!
-            latestChat.messages = chat.messages;
-            await StorageService.saveChat(latestChat);
+        // PAS NU: Als het een gloednieuwe chat was, gaan we NU pas de titel berekenen (veilig, zonder database-clashes)
+        if (isNewChat) {
+            await generateChatTitle(prompt, currentChatId);
         } else {
-            // Anders slaan we onze eigen versie gewoon op
-            await StorageService.saveChat(chat);
+            await updateHistoryDisplay();
         }
-        
-        await updateHistoryDisplay();
+
     } catch (e) {
         loader.remove();
         if (e.name === 'AbortError') { 
