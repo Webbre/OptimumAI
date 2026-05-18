@@ -7,7 +7,7 @@ import { callClaude, callGemini } from './api.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
-// VERBETERD: We gebruiken getApp() in plaats van initializeApp() om conflicten te voorkomen!
+// We gebruiken getApp() in plaats van initializeApp() om conflicten te voorkomen!
 const auth = getAuth(getApp());
 let globalUserId = null;
 
@@ -45,16 +45,13 @@ window.onload = async () => {
     await loadKeys(); 
     
     // --- AUTHENTICATION MONITOR ---
-    // Google houdt hiermee constant in de gaten of je bent ingelogd
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // Gebruiker is ingelogd!
             globalUserId = user.uid;
             document.getElementById('auth-screen').style.display = 'none'; 
             await StorageService.migrateLocalToFirebase();
             await updateHistoryDisplay();
         } else {
-            // Gebruiker is NIET ingelogd
             globalUserId = null;
             document.getElementById('auth-screen').style.display = 'flex'; 
             document.getElementById('history-list').innerHTML = ''; 
@@ -65,7 +62,6 @@ window.onload = async () => {
     document.getElementById('loginBtn').addEventListener('click', handleLogin);
     document.getElementById('logoutBtn').addEventListener('click', handleLogout);
     
-    // Enter-toets in het wachtwoordveld om in te loggen
     document.getElementById('authPassword').addEventListener('keydown', e => {
         if (e.key === 'Enter') handleLogin();
     });
@@ -91,7 +87,6 @@ window.onload = async () => {
     });
 };
 
-// Inlog-functie
 async function handleLogin() {
     const email = document.getElementById('authEmail').value.trim();
     const password = document.getElementById('authPassword').value;
@@ -111,7 +106,6 @@ async function handleLogin() {
     }
 }
 
-// Uitlog-functie
 async function handleLogout() {
     if (confirm('Weet je zeker dat je wilt uitloggen?')) {
         await signOut(auth);
@@ -197,7 +191,7 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
 }
 
 async function updateHistoryDisplay() {
-    if (!globalUserId) return; // Stop als we niet ingelogd zijn
+    if (!globalUserId) return; 
     
     const rawChats = await StorageService.getChats();
     const chats = [];
@@ -206,7 +200,6 @@ async function updateHistoryDisplay() {
         if ((!c.messages || c.messages.length === 0) && c.id !== currentChatId) {
             await StorageService.deleteChat(c.id);
         } else if (c.userId === globalUserId || !c.userId) { 
-            // Toon alleen chats van JOUW account (of oude chats die nog geen ID hadden)
             chats.push(c);
         }
     }
@@ -339,7 +332,7 @@ async function startWorkflow() {
         
         await StorageService.saveChat({ 
             id: currentChatId, 
-            userId: globalUserId, // BEVEILIGD: Chat koppelen aan jouw unieke Google-account ID!
+            userId: globalUserId,
             title: prompt.substring(0,25) + '...', 
             category: selectedCategory,
             date: new Date().toLocaleDateString('nl-NL'),
@@ -362,7 +355,19 @@ async function startWorkflow() {
 
     try {
         const chats = await StorageService.getChats(); 
-        const chat = chats.find(c => c.id === currentChatId);
+        let chat = chats.find(c => c.id === currentChatId);
+        
+        // VEILIGHEIDSNET: Als Firebase milliseconden-vertraging heeft, pakken we een nood-chat.
+        if (!chat) {
+            chat = { 
+                id: currentChatId, 
+                userId: globalUserId,
+                title: prompt.substring(0,25) + '...', 
+                category: document.getElementById('chatCategory').value,
+                messages: [] 
+            };
+        }
+
         const history = chat.messages.filter(m => m.role==='user'||m.role==='ai').map(m => ({ role: m.role==='ai'?'assistant':'user', content: m.content }));
         
         loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_BUSY}</div>`;
