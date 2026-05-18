@@ -3,11 +3,9 @@ import { WORKFLOW_STEPS_TEXTS, PROMPTS } from './config.js';
 import { StorageService, SettingsService } from './storage.js';
 import { callClaude, callGemini } from './api.js';
 
-// Google Authentication CDN inladen
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
-// We gebruiken getApp() in plaats van initializeApp() om conflicten te voorkomen!
 const auth = getAuth(getApp());
 let globalUserId = null;
 
@@ -44,7 +42,6 @@ window.onload = async () => {
     document.getElementById('chat-window').innerHTML = getWelcomeScreenHTML();
     await loadKeys(); 
     
-    // --- AUTHENTICATION MONITOR ---
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             globalUserId = user.uid;
@@ -58,7 +55,6 @@ window.onload = async () => {
         }
     });
     
-    // --- KABELTJES LISTENERS ---
     document.getElementById('loginBtn').addEventListener('click', handleLogin);
     document.getElementById('logoutBtn').addEventListener('click', handleLogout);
     
@@ -295,7 +291,6 @@ async function generateChatTitle(promptText, chatId) {
         let rawText = '';
         try { rawText = await callGemini(PROMPTS.TITEL(promptText), null); } 
         catch (geminiFout) {
-            console.warn("Gemini titel fout, Claude valt in:", geminiFout);
             rawText = await callClaude([{role: 'user', content: PROMPTS.TITEL(promptText)}], null);
         }
         let nieuweTitel = rawText;
@@ -308,7 +303,7 @@ async function generateChatTitle(promptText, chatId) {
         nieuweTitel = nieuweTitel.replace(/\[|\]/g, '').replace(/^["']|["']$/g, '').trim();
         await StorageService.updateChatField(chatId, 'title', nieuweTitel);
         await updateHistoryDisplay();
-    } catch(e) { console.error("Titelgeneratie volledig gefaald:", e); }
+    } catch(e) { console.error("Titelgeneratie gefaald:", e); }
 }
 
 async function startNewChat() {
@@ -328,7 +323,7 @@ async function startWorkflow() {
     
     if (!currentChatId) {
         currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const selectedCategory = document.getElementById('chatCategory').value;
+        const selectedCategory = document.getElementById('chatCategory').value || 'Privé';
         
         await StorageService.saveChat({ 
             id: currentChatId, 
@@ -357,15 +352,22 @@ async function startWorkflow() {
         const chats = await StorageService.getChats(); 
         let chat = chats.find(c => c.id === currentChatId);
         
-        // VEILIGHEIDSNET: Als Firebase milliseconden-vertraging heeft, pakken we een nood-chat.
+        // VEILIGHEIDSNET: Zorg dat het object altijd compleet is
         if (!chat) {
             chat = { 
                 id: currentChatId, 
                 userId: globalUserId,
                 title: prompt.substring(0,25) + '...', 
-                category: document.getElementById('chatCategory').value,
+                category: document.getElementById('chatCategory').value || 'Privé',
+                date: new Date().toLocaleDateString('nl-NL'),
+                createdAt: Date.now(),
                 messages: [] 
             };
+        }
+        
+        // Garandeer dat messages een array is
+        if (!chat.messages) {
+            chat.messages = [];
         }
 
         const history = chat.messages.filter(m => m.role==='user'||m.role==='ai').map(m => ({ role: m.role==='ai'?'assistant':'user', content: m.content }));
@@ -384,8 +386,22 @@ async function startWorkflow() {
         const sDiv = appendMessage('steps', stappen, false); appendMessage('ai', final, false);
         win.scrollTo({ top: sDiv.offsetTop - 20, behavior: 'smooth' });
 
+        // Voeg de nieuwe berichten toe
         chat.messages.push({ role: 'user', content: prompt }, { role: 'steps', content: stappen }, { role: 'ai', content: final });
-        await StorageService.saveChat(chat); 
+        
+        // VERKEERSREGELAAR: Haal de allerlaatste versie van de chat op uit Firebase voordat we opslaan
+        const updatedChats = await StorageService.getChats();
+        const latestChat = updatedChats.find(c => c.id === currentChatId);
+        
+        if (latestChat) {
+            // Als de titel inmiddels is aangepast door Trein B, behouden we die, en voegen we alleen onze berichten toe!
+            latestChat.messages = chat.messages;
+            await StorageService.saveChat(latestChat);
+        } else {
+            // Anders slaan we onze eigen versie gewoon op
+            await StorageService.saveChat(chat);
+        }
+        
         await updateHistoryDisplay();
     } catch (e) {
         loader.remove();
