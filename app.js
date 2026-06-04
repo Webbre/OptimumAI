@@ -46,6 +46,16 @@ window.onload = async () => {
         if (user) {
             globalUserId = user.uid;
             document.getElementById('auth-screen').style.display = 'none'; 
+            
+            // 🔒 HET ADMIN SLOTJE 
+            const adminUID = 'quPw1vZznYZoiD23stDz7cng0ND3';
+            const settingsKnop = document.getElementById('settingsLink');
+            if (globalUserId === adminUID) {
+                settingsKnop.style.display = 'block'; // Toon de knop exclusief voor jou
+            } else {
+                settingsKnop.style.display = 'none';  // Verberg voor alle andere gebruikers
+            }
+
             await StorageService.migrateLocalToFirebase();
             await updateHistoryDisplay();
         } else {
