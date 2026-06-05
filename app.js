@@ -19,7 +19,7 @@ let originalPromptText = "";
 let typingTimer;
 const typingDelay = 500; 
 
-// NIEUW: Bijlages
+// Bijlages
 let currentAttachments = [];
 
 window.startNewChat = startNewChat;
@@ -90,19 +90,62 @@ window.onload = async () => {
         if (sidebar.classList.contains('open')) { btn.innerHTML = '✖ Sluiten'; } else { btn.innerHTML = '☰ Menu'; }
     });
 
-    // --- BIJLAGE LOGICA ---
-    const fileAttachment = document.getElementById('fileAttachment');
-    const attachBtn = document.getElementById('attachBtn');
+    // --- BIJLAGE LOGICA MET MENU ---
+    const pdfAttachment = document.getElementById('pdfAttachment');
+    const imgAttachment = document.getElementById('imgAttachment');
+    const attachToggleBtn = document.getElementById('attachToggleBtn');
+    const attachMenu = document.getElementById('attachMenu');
+    const attachMenuWrapper = document.getElementById('attachMenuWrapper');
+    const addPdfBtn = document.getElementById('addPdfBtn');
+    const addImgBtn = document.getElementById('addImgBtn');
     const attachmentPreview = document.getElementById('attachmentPreview');
 
-    attachBtn.addEventListener('click', () => fileAttachment.click());
+    function closeAttachMenu() {
+        attachMenu.style.opacity = '0';
+        attachMenu.style.transform = 'translateY(10px)';
+        attachToggleBtn.style.transform = 'rotate(0deg)';
+        setTimeout(() => attachMenu.style.visibility = 'hidden', 300);
+    }
 
-    fileAttachment.addEventListener('change', (e) => {
-        handleFiles(e.target.files);
-        fileAttachment.value = ''; // reset
+    attachToggleBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isOpen = attachMenu.style.visibility === 'visible';
+        if (isOpen) {
+            closeAttachMenu();
+        } else {
+            attachMenu.style.visibility = 'visible';
+            attachMenu.style.opacity = '1';
+            attachMenu.style.transform = 'translateY(0)';
+            attachToggleBtn.style.transform = 'rotate(90deg)';
+        }
     });
 
-    // Ctrl+V Plak-logica voor screenshots
+    document.addEventListener('click', (event) => {
+        if (!attachMenuWrapper.contains(event.target) && attachMenu.style.visibility === 'visible') {
+            closeAttachMenu();
+        }
+    });
+
+    addPdfBtn.addEventListener('click', () => {
+        pdfAttachment.click();
+        closeAttachMenu();
+    });
+
+    addImgBtn.addEventListener('click', () => {
+        imgAttachment.click();
+        closeAttachMenu();
+    });
+
+    pdfAttachment.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        pdfAttachment.value = ''; 
+    });
+
+    imgAttachment.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        imgAttachment.value = ''; 
+    });
+
     userPromptField.addEventListener('paste', (e) => {
         if (e.clipboardData && e.clipboardData.files.length > 0) {
             e.preventDefault(); 
@@ -112,7 +155,6 @@ window.onload = async () => {
 
     function handleFiles(files) {
         for (const file of files) {
-            // Beveiliging: Maximaal 4MB per bestand om crashes in Firebase te voorkomen
             if (file.size > 4 * 1024 * 1024) {
                 showToast(`Bestand is te groot (max 4MB)`, 'error');
                 continue;
@@ -125,7 +167,7 @@ window.onload = async () => {
             reader.onload = (e) => {
                 const base64Data = e.target.result.split(',')[1];
                 currentAttachments.push({
-                    name: file.name || "Screenshot.png",
+                    name: file.name || "Screenshot",
                     mimeType: file.type,
                     data: base64Data,
                     isImage: file.type.startsWith('image/')
@@ -434,7 +476,6 @@ async function generateChatTitle(promptText, chatId) {
 
         let rawText = '';
         try { 
-            // Geen bestanden nodig voor de titel
             rawText = await callGemini(PROMPTS.TITEL(promptText), null, activeGeminiModel, null); 
         } catch (geminiFout) {
             rawText = await callClaude([{role: 'user', content: PROMPTS.TITEL(promptText)}], activeClaudeModel, null);
@@ -466,7 +507,7 @@ async function startNewChat() {
 async function startWorkflow() {
     if (abortController) { abortController.abort(); return; }
     const prompt = document.getElementById('userPrompt').value.trim();
-    if (!prompt && currentAttachments.length === 0) return; // Sta verzenden toe als er alleen bestanden zijn
+    if (!prompt && currentAttachments.length === 0) return; 
     
     const originalPrompt = prompt; 
     document.getElementById('userPrompt').value = '';
@@ -476,7 +517,6 @@ async function startWorkflow() {
     const btn = document.getElementById('sendBtn'); 
     btn.innerText = 'Stop'; btn.classList.add('stop-btn');
     
-    // Zorg dat de bestandsnamen visueel in de chat komen, maar we strippen de zware base64!
     let displayPrompt = prompt;
     if (currentAttachments.length > 0) {
         const fileNames = currentAttachments.map(f => f.name).join(', ');
@@ -514,10 +554,8 @@ async function startWorkflow() {
         let chat = chats.find(c => c.id === currentChatId);
         if (!chat.messages) chat.messages = [];
 
-        // Bouw de geschiedenis op voor Claude
         const history = chat.messages.filter(m => m.role==='user'||m.role==='ai').map(m => ({ role: m.role==='ai'?'assistant':'user', content: m.content }));
 
-        // Multimodale pakketjes inpakken
         let claudeContent = [];
         let geminiParts = [];
 
@@ -537,7 +575,6 @@ async function startWorkflow() {
             geminiParts.push({ text: prompt });
         }
 
-        // We ruimen de frontend bijlages direct op
         currentAttachments = [];
         document.getElementById('attachmentPreview').innerHTML = '';
         document.getElementById('attachmentPreview').style.display = 'none';
@@ -546,7 +583,6 @@ async function startWorkflow() {
         const draft = await callClaude([...history, {role:'user', content: claudeContent}], activeClaudeModel, signal);
         
         loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.GEMINI_BUSY}</div>`;
-        // Let op: Bij feedback sturen we géén parts/bestanden meer mee, alleen de tekst
         const feedback = await callGemini(PROMPTS.GEMINI_REVIEW(prompt, draft), null, activeGeminiModel, signal);
         
         loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_BUSY}</div>`;
@@ -557,7 +593,6 @@ async function startWorkflow() {
         const sDiv = appendMessage('steps', stappen, false); appendMessage('ai', final, false);
         win.scrollTo({ top: sDiv.offsetTop - 20, behavior: 'smooth' });
 
-        // Sla het bericht permanent op, zonder de zware base64 afbeeldingen!
         chat.messages.push({ role: 'user', content: displayPrompt }, { role: 'steps', content: stappen }, { role: 'ai', content: final });
         
         await StorageService.updateChatField(currentChatId, 'messages', chat.messages);
