@@ -1,4 +1,5 @@
 // app.js
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { WORKFLOW_STEPS_TEXTS, PROMPTS } from './config.js';
 import { StorageService, SettingsService } from './storage.js';
 import { callClaude, callGemini } from './api.js';
@@ -13,6 +14,10 @@ let globalUserId = null;
 let currentChatId = null;
 let abortController = null;
 let collapsedCategories = new Set(JSON.parse(localStorage.getItem('collapsed_categories') || '[]'));
+// Variabelen voor de Optimalisatie flow
+let originalPromptText = "";
+let typingTimer;
+const typingDelay = 500; // Debounce tijd (een halve seconde wachten na de laatste toetsaanslag)
 
 window.startNewChat = startNewChat;
 window.updateHistoryDisplay = updateHistoryDisplay;
@@ -77,6 +82,79 @@ window.onload = async () => {
 
     document.getElementById('sendBtn').addEventListener('click', startWorkflow);
     document.getElementById('newChatBtn').addEventListener('click', startNewChat);
+    // --- OPTIMALISATIE LOGICA ---
+    const userPromptField = document.getElementById('userPrompt');
+    const optimizeContainer = document.getElementById('optimizeContainer');
+    const optimizeBtn = document.getElementById('optimizeBtn');
+    const undoOptimizeBtn = document.getElementById('undoOptimizeBtn');
+
+    userPromptField.addEventListener('input', () => {
+        clearTimeout(typingTimer);
+        const currentText = userPromptField.value.trim();
+        
+        // Zodra je typt, verdwijnt de Undo knop (reset)
+        if (undoOptimizeBtn.style.display === 'flex' || undoOptimizeBtn.style.display === 'block') {
+            optimizeBtn.style.display = 'flex';
+            undoOptimizeBtn.style.display = 'none';
+        }
+
+        // Debounce logica
+        typingTimer = setTimeout(() => {
+            if (currentText.length > 15) {
+                optimizeContainer.style.visibility = 'visible';
+                optimizeContainer.style.opacity = '1';
+            } else {
+                optimizeContainer.style.opacity = '0';
+                setTimeout(() => { optimizeContainer.style.visibility = 'hidden'; }, 300);
+            }
+        }, typingDelay);
+    });
+
+    optimizeBtn.addEventListener('click', async () => {
+        const currentText = userPromptField.value.trim();
+        if (currentText.length < 15) return;
+
+        originalPromptText = currentText; // Bewaar origineel
+        userPromptField.disabled = true;
+        optimizeBtn.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div> Even denken...';
+
+        try {
+            const functions = getFunctions(getApp());
+            const secureCallClaude = httpsCallable(functions, 'secureCallClaude');
+            
+            // We sturen de speciale instructie naar Claude 3.5 Haiku
+            const result = await secureCallClaude({ 
+                messages: [{ role: "user", content: "Zie systeeminstructie." }],
+                system: PROMPTS.OPTIMIZE_PROMPT(currentText),
+                model: 'claude-3-5-haiku-20241022',
+                temperature: 0.1
+            });
+
+            const optimizedText = result.data.trim();
+
+            if (optimizedText && optimizedText !== currentText && !optimizedText.includes('<input>')) {
+                userPromptField.value = optimizedText;
+                optimizeBtn.style.display = 'none';
+                undoOptimizeBtn.style.display = 'flex';
+            } else {
+                showToast("Prompt was al optimaal", "info");
+            }
+        } catch (error) {
+            console.error("Optimalisatie gefaald:", error);
+            showToast("Kon niet optimaliseren");
+        } finally {
+            optimizeBtn.innerHTML = '✨ Optimaliseer prompt';
+            userPromptField.disabled = false;
+            userPromptField.focus();
+        }
+    });
+
+    undoOptimizeBtn.addEventListener('click', () => {
+        userPromptField.value = originalPromptText;
+        undoOptimizeBtn.style.display = 'none';
+        optimizeBtn.style.display = 'flex';
+        userPromptField.focus();
+    });
     document.getElementById('saveSettingsBtn').addEventListener('click', toggleSettings);
 
     document.getElementById('menu-toggle').addEventListener('click', () => {
