@@ -2,6 +2,7 @@
 import { WORKFLOW_STEPS_TEXTS, PROMPTS } from './config.js';
 import { StorageService, SettingsService } from './storage.js';
 import { callClaude, callGemini } from './api.js';
+import { maakInstellingenMenu } from './settings.js'; // ⚙️ De import voor je nieuwe instellingen
 
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -47,14 +48,8 @@ window.onload = async () => {
             globalUserId = user.uid;
             document.getElementById('auth-screen').style.display = 'none'; 
             
-            // 🔒 HET ADMIN SLOTJE 
-            const adminUID = 'quPw1vZznYZoiD23stDz7cng0ND3';
-            const settingsKnop = document.getElementById('settingsLink');
-            if (globalUserId === adminUID) {
-                settingsKnop.style.display = 'block'; // Toon de knop exclusief voor jou
-            } else {
-                settingsKnop.style.display = 'none';  // Verberg voor alle andere gebruikers
-            }
+            // ⚙️ TEKEN HET FANCY MENUUTJE NAAST DE TITEL
+            maakInstellingenMenu('sidebar-titel', globalUserId, handleLogout, toggleSettings);
 
             await StorageService.migrateLocalToFirebase();
             await updateHistoryDisplay();
@@ -62,11 +57,14 @@ window.onload = async () => {
             globalUserId = null;
             document.getElementById('auth-screen').style.display = 'flex'; 
             document.getElementById('history-list').innerHTML = ''; 
+            
+            // Verberg het menuutje als de gebruiker weer uitlogt
+            const bestaandMenu = document.getElementById('fancy-settings-wrapper');
+            if (bestaandMenu) bestaandMenu.remove();
         }
     });
     
     document.getElementById('loginBtn').addEventListener('click', handleLogin);
-    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
     
     document.getElementById('authPassword').addEventListener('keydown', e => {
         if (e.key === 'Enter') handleLogin();
@@ -81,7 +79,6 @@ window.onload = async () => {
 
     document.getElementById('sendBtn').addEventListener('click', startWorkflow);
     document.getElementById('newChatBtn').addEventListener('click', startNewChat);
-    document.getElementById('settingsLink').addEventListener('click', toggleSettings);
     document.getElementById('saveSettingsBtn').addEventListener('click', toggleSettings);
 
     document.getElementById('menu-toggle').addEventListener('click', () => {
@@ -296,7 +293,6 @@ function appendMessage(role, content, autoScroll = true) {
     return div;
 }
 
-// CHIRURGISCHE UPDATE: We updaten nu uitsluitend het 'title' veld in de database
 async function generateChatTitle(promptText, chatId) {
     try { 
         let rawText = '';
@@ -313,7 +309,6 @@ async function generateChatTitle(promptText, chatId) {
         }
         nieuweTitel = nieuweTitel.replace(/\[|\]/g, '').replace(/^["']|["']$/g, '').trim();
         
-        // Vertel Firebase om alléén de titel te updaten (en blijf van de rest af!)
         await StorageService.updateChatField(chatId, 'title', nieuweTitel);
         await updateHistoryDisplay();
     } catch(e) { console.error("Titelgeneratie gefaald:", e); }
@@ -347,7 +342,6 @@ async function startWorkflow() {
     const loader = document.createElement('div'); loader.className = 'workflow-steps'; win.appendChild(loader);
 
     try {
-        // 1. NIEUWE CHAT AANMAKEN EN TITELGENERATOR STARTEN
         if (!currentChatId) {
             currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             const selectedCategory = document.getElementById('chatCategory').value || 'Privé';
@@ -363,13 +357,11 @@ async function startWorkflow() {
             };
             
             await StorageService.saveChat(newChatObject);
-            await updateHistoryDisplay(); // Toon de tijdelijke titel direct
+            await updateHistoryDisplay(); 
             
-            // Start direct de titelgenerator in de achtergrond (let op: we gebruiken expres GEEN await)
             generateChatTitle(prompt, currentChatId);
         }
 
-        // 2. CHAT OPHALEN
         const chats = await StorageService.getChats(); 
         let chat = chats.find(c => c.id === currentChatId);
         
@@ -386,7 +378,6 @@ async function startWorkflow() {
         }
         if (!chat.messages) chat.messages = [];
 
-        // 3. AI MOTOR
         const history = chat.messages.filter(m => m.role==='user'||m.role==='ai').map(m => ({ role: m.role==='ai'?'assistant':'user', content: m.content }));
         
         loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_BUSY}</div>`;
@@ -403,13 +394,9 @@ async function startWorkflow() {
         const sDiv = appendMessage('steps', stappen, false); appendMessage('ai', final, false);
         win.scrollTo({ top: sDiv.offsetTop - 20, behavior: 'smooth' });
 
-        // 4. BERICHTEN OPSLAAN
         chat.messages.push({ role: 'user', content: prompt }, { role: 'steps', content: stappen }, { role: 'ai', content: final });
         
-        // Omdat de achtergrondtaak (titel) misschien de 'title' heeft aangepast, werken we hier ook met een chirurgische update voor alleen de berichten!
         await StorageService.updateChatField(currentChatId, 'messages', chat.messages);
-        
-        // Refresh voor de zekerheid
         await updateHistoryDisplay();
 
     } catch (e) {
