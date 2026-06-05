@@ -7,7 +7,6 @@ export async function callClaude(messages, model, signal) {
         const functions = getFunctions(getApp());
         const secureCallClaude = httpsCallable(functions, 'secureCallClaude');
         
-        // We sturen nu expliciet het geselecteerde model mee naar de kluis
         const result = await secureCallClaude({ 
             messages: messages,
             model: model 
@@ -19,16 +18,21 @@ export async function callClaude(messages, model, signal) {
     }
 }
 
-export async function callGemini(prompt, model, signal) {
+// Toegevoegd: de optionele 'parts' parameter voor bestanden
+export async function callGemini(prompt, parts, model, signal) {
     try {
         const functions = getFunctions(getApp());
         const secureCallGemini = httpsCallable(functions, 'secureCallGemini');
 
-        // We sturen nu expliciet het geselecteerde model mee naar de kluis
-        const result = await secureCallGemini({ 
-            prompt: prompt,
-            model: model
-        });
+        const payload = { model: model };
+        // Als er bestanden zijn, sturen we de parts array, anders de platte prompt
+        if (parts && parts.length > 0) {
+            payload.parts = parts;
+        } else {
+            payload.prompt = prompt;
+        }
+
+        const result = await secureCallGemini(payload);
         return result.data;
     } catch (error) {
         console.error("Fout in beveiligde Gemini aanroep:", error);
