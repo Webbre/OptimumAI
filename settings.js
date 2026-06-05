@@ -13,7 +13,9 @@ export function maakInstellingenMenu(containerId, userId, logoutActie, instellin
     wrapper.style.position = 'relative';
     wrapper.style.display = 'inline-flex';
     wrapper.style.alignItems = 'center';
-    wrapper.style.marginLeft = '10px';
+    // PUSH NAAR RECHTS: Dit drukt het tandwiel helemaal naar de rechterkant van de titelbalk
+    wrapper.style.marginLeft = 'auto'; 
+    wrapper.style.marginRight = '5px'; 
 
     // Het tandwiel
     const icoon = document.createElement('span');
@@ -26,7 +28,8 @@ export function maakInstellingenMenu(containerId, userId, logoutActie, instellin
     const menu = document.createElement('div');
     menu.style.position = 'absolute';
     menu.style.top = '140%';
-    menu.style.left = '0';
+    // KLAP NAAR LINKS: Door right op 0 te zetten, klapt het menu de andere kant op en wordt het niet afgesneden
+    menu.style.right = '0'; 
     menu.style.backgroundColor = '#ffffff';
     menu.style.border = '1px solid #e0e0e0';
     menu.style.borderRadius = '8px';
