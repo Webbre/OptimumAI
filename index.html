@@ -42,12 +42,22 @@
     <div id="main-content">
         <div id="chat-window"></div>
         <div id="input-container">
-            <div class="input-wrapper">
+           <div class="input-wrapper" style="position: relative;">
                 <select id="chatCategory" class="category-select">
                     <option value="Privé">🏠 Privé</option>
                     <option value="Werk & school">💼 Werk & school</option>
                 </select>
                 <textarea id="userPrompt" rows="5" placeholder="Stel een vraag... (Shift + Enter voor een nieuwe regel)"></textarea>
+                
+                <div id="optimizeContainer" style="position: absolute; top: 10px; right: 10px; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s;">
+                    <button id="optimizeBtn" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); border: none; border-radius: 15px; padding: 5px 12px; font-size: 0.8rem; font-weight: bold; color: white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 5px;">
+                        ✨ Optimaliseer prompt
+                    </button>
+                    <button id="undoOptimizeBtn" style="display: none; background: #f0f0f0; border: 1px solid #ccc; border-radius: 15px; padding: 5px 12px; font-size: 0.8rem; color: #555; cursor: pointer;">
+                        ↩ Herstellen
+                    </button>
+                </div>
+
                 <div class="controls" style="justify-content: flex-end;">
                     <button class="send-btn" id="sendBtn">Verstuur</button>
                 </div>
