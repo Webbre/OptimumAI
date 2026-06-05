@@ -2,7 +2,7 @@
 import { WORKFLOW_STEPS_TEXTS, PROMPTS } from './config.js';
 import { StorageService, SettingsService } from './storage.js';
 import { callClaude, callGemini } from './api.js';
-import { maakInstellingenMenu } from './settings.js'; // ⚙️ De import voor je nieuwe instellingen
+import { maakInstellingenMenu } from './settings.js';
 
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -48,7 +48,6 @@ window.onload = async () => {
             globalUserId = user.uid;
             document.getElementById('auth-screen').style.display = 'none'; 
             
-            // ⚙️ TEKEN HET FANCY MENUUTJE NAAST DE TITEL
             maakInstellingenMenu('sidebar-titel', globalUserId, handleLogout, toggleSettings);
 
             await StorageService.migrateLocalToFirebase();
@@ -58,7 +57,6 @@ window.onload = async () => {
             document.getElementById('auth-screen').style.display = 'flex'; 
             document.getElementById('history-list').innerHTML = ''; 
             
-            // Verberg het menuutje als de gebruiker weer uitlogt
             const bestaandMenu = document.getElementById('fancy-settings-wrapper');
             if (bestaandMenu) bestaandMenu.remove();
         }
@@ -120,8 +118,8 @@ async function handleLogout() {
 async function loadKeys() {
     document.getElementById('geminiKey').value = await SettingsService.getSetting('webbreGemini') || '';
     document.getElementById('claudeKey').value = await SettingsService.getSetting('webbreClaude') || '';
-    document.getElementById('claudeModel').value = await SettingsService.getSetting('webbreClaudeModel') || 'claude-opus-4-7';
-    document.getElementById('geminiModel').value = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-2.5-pro';
+    document.getElementById('claudeModel').value = await SettingsService.getSetting('webbreClaudeModel') || 'claude-3-5-sonnet-20240620';
+    document.getElementById('geminiModel').value = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-1.5-pro';
 }
 
 async function toggleSettings() {
@@ -295,10 +293,15 @@ function appendMessage(role, content, autoScroll = true) {
 
 async function generateChatTitle(promptText, chatId) {
     try { 
+        // Haal het dynamisch gekozen Gemini-model op voor de titelgenerator
+        const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-1.5-pro';
+        const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-3-5-sonnet-20240620';
+
         let rawText = '';
-        try { rawText = await callGemini(PROMPTS.TITEL(promptText), null); } 
-        catch (geminiFout) {
-            rawText = await callClaude([{role: 'user', content: PROMPTS.TITEL(promptText)}], null);
+        try { 
+            rawText = await callGemini(PROMPTS.TITEL(promptText), activeGeminiModel, null); 
+        } catch (geminiFout) {
+            rawText = await callClaude([{role: 'user', content: PROMPTS.TITEL(promptText)}], activeClaudeModel, null);
         }
         let nieuweTitel = rawText;
         const match = rawText.match(/\[(.*?)\]/);
@@ -311,7 +314,7 @@ async function generateChatTitle(promptText, chatId) {
         
         await StorageService.updateChatField(chatId, 'title', nieuweTitel);
         await updateHistoryDisplay();
-    } catch(e) { console.error("Titelgeneratie gefaald:", e); }
+    } catch(e) { console.error("Titelgeneratie gefaaled:", e); }
 }
 
 async function startNewChat() {
@@ -342,6 +345,10 @@ async function startWorkflow() {
     const loader = document.createElement('div'); loader.className = 'workflow-steps'; win.appendChild(loader);
 
     try {
+        // Haal de momenteel geselecteerde modellen op uit de instellingen
+        const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-3-5-sonnet-20240620';
+        const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-1.5-pro';
+
         if (!currentChatId) {
             currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             const selectedCategory = document.getElementById('chatCategory').value || 'Privé';
@@ -381,13 +388,16 @@ async function startWorkflow() {
         const history = chat.messages.filter(m => m.role==='user'||m.role==='ai').map(m => ({ role: m.role==='ai'?'assistant':'user', content: m.content }));
         
         loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_BUSY}</div>`;
-        const draft = await callClaude([...history, {role:'user', content: prompt}], signal);
+        // Geef het actieve Claude model mee
+        const draft = await callClaude([...history, {role:'user', content: prompt}], activeClaudeModel, signal);
         
         loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.GEMINI_BUSY}</div>`;
-        const feedback = await callGemini(PROMPTS.GEMINI_REVIEW(prompt, draft), signal);
+        // Geef het actieve Gemini model mee
+        const feedback = await callGemini(PROMPTS.GEMINI_REVIEW(prompt, draft), activeGeminiModel, signal);
         
         loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_BUSY}</div>`;
-        const final = await callClaude([{role:'user', content: PROMPTS.STRIKTE_REWRITE(prompt, draft, feedback)}], signal);
+        // Geef het actieve Claude model mee voor de definitieve herschrijving
+        const final = await callClaude([{role:'user', content: PROMPTS.STRIKTE_REWRITE(prompt, draft, feedback)}], activeClaudeModel, signal);
 
         loader.remove();
         const stappen = [`<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_DONE}`];
