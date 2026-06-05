@@ -1,10 +1,9 @@
 // app.js
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { WORKFLOW_STEPS_TEXTS, PROMPTS } from './config.js';
 import { StorageService, SettingsService } from './storage.js';
 import { callClaude, callGemini } from './api.js';
 import { maakInstellingenMenu } from './settings.js';
-
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
@@ -14,10 +13,11 @@ let globalUserId = null;
 let currentChatId = null;
 let abortController = null;
 let collapsedCategories = new Set(JSON.parse(localStorage.getItem('collapsed_categories') || '[]'));
+
 // Variabelen voor de Optimalisatie flow
 let originalPromptText = "";
 let typingTimer;
-const typingDelay = 500; // Debounce tijd (een halve seconde wachten na de laatste toetsaanslag)
+const typingDelay = 500; // Debounce tijd
 
 window.startNewChat = startNewChat;
 window.updateHistoryDisplay = updateHistoryDisplay;
@@ -82,6 +82,16 @@ window.onload = async () => {
 
     document.getElementById('sendBtn').addEventListener('click', startWorkflow);
     document.getElementById('newChatBtn').addEventListener('click', startNewChat);
+    document.getElementById('saveSettingsBtn').addEventListener('click', toggleSettings);
+
+    document.getElementById('menu-toggle').addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        const btn = document.getElementById('menu-toggle');
+        sidebar.classList.toggle('open');
+        if (sidebar.classList.contains('open')) { btn.innerHTML = '✖ Sluiten'; } 
+        else { btn.innerHTML = '☰ Menu'; }
+    });
+
     // --- OPTIMALISATIE LOGICA ---
     const userPromptField = document.getElementById('userPrompt');
     const optimizeContainer = document.getElementById('optimizeContainer');
@@ -92,13 +102,11 @@ window.onload = async () => {
         clearTimeout(typingTimer);
         const currentText = userPromptField.value.trim();
         
-        // Zodra je typt, verdwijnt de Undo knop (reset)
         if (undoOptimizeBtn.style.display === 'flex' || undoOptimizeBtn.style.display === 'block') {
             optimizeBtn.style.display = 'flex';
             undoOptimizeBtn.style.display = 'none';
         }
 
-        // Debounce logica
         typingTimer = setTimeout(() => {
             if (currentText.length > 15) {
                 optimizeContainer.style.visibility = 'visible';
@@ -114,7 +122,7 @@ window.onload = async () => {
         const currentText = userPromptField.value.trim();
         if (currentText.length < 15) return;
 
-        originalPromptText = currentText; // Bewaar origineel
+        originalPromptText = currentText; 
         userPromptField.disabled = true;
         optimizeBtn.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div> Even denken...';
 
@@ -122,11 +130,11 @@ window.onload = async () => {
             const functions = getFunctions(getApp());
             const secureCallClaude = httpsCallable(functions, 'secureCallClaude');
             
-            // We sturen de speciale instructie naar Claude 3.5 Haiku
+            // OPLOSSING: We gebruiken nu de actuele, geaccepteerde modelnaam 'claude-haiku-4-5'
             const result = await secureCallClaude({ 
                 messages: [{ role: "user", content: "Zie systeeminstructie." }],
                 system: PROMPTS.OPTIMIZE_PROMPT(currentText),
-                model: 'claude-3-5-haiku-20241022',
+                model: 'claude-haiku-4-5',
                 temperature: 0.1
             });
 
@@ -154,15 +162,6 @@ window.onload = async () => {
         undoOptimizeBtn.style.display = 'none';
         optimizeBtn.style.display = 'flex';
         userPromptField.focus();
-    });
-    document.getElementById('saveSettingsBtn').addEventListener('click', toggleSettings);
-
-    document.getElementById('menu-toggle').addEventListener('click', () => {
-        const sidebar = document.getElementById('sidebar');
-        const btn = document.getElementById('menu-toggle');
-        sidebar.classList.toggle('open');
-        if (sidebar.classList.contains('open')) { btn.innerHTML = '✖ Sluiten'; } 
-        else { btn.innerHTML = '☰ Menu'; }
     });
 };
 
@@ -194,7 +193,6 @@ async function handleLogout() {
 }
 
 async function loadKeys() {
-    // Aangepast naar de nieuwste default-modellen
     document.getElementById('claudeModel').value = await SettingsService.getSetting('webbreClaudeModel') || 'claude-sonnet-4-6';
     document.getElementById('geminiModel').value = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-3.5-flash';
 }
@@ -368,7 +366,6 @@ function appendMessage(role, content, autoScroll = true) {
 
 async function generateChatTitle(promptText, chatId) {
     try { 
-        // Aangepast naar de nieuwste default-modellen
         const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-3.5-flash';
         const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-sonnet-4-6';
 
@@ -420,7 +417,6 @@ async function startWorkflow() {
     const loader = document.createElement('div'); loader.className = 'workflow-steps'; win.appendChild(loader);
 
     try {
-        // Aangepast naar de nieuwste default-modellen
         const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-sonnet-4-6';
         const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-3.5-flash';
 
