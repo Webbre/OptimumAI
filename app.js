@@ -116,8 +116,7 @@ async function handleLogout() {
 }
 
 async function loadKeys() {
-    document.getElementById('geminiKey').value = await SettingsService.getSetting('webbreGemini') || '';
-    document.getElementById('claudeKey').value = await SettingsService.getSetting('webbreClaude') || '';
+    // Alleen de modellen worden nog ingeladen
     document.getElementById('claudeModel').value = await SettingsService.getSetting('webbreClaudeModel') || 'claude-3-5-sonnet-20240620';
     document.getElementById('geminiModel').value = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-1.5-pro';
 }
@@ -125,9 +124,8 @@ async function loadKeys() {
 async function toggleSettings() {
     const m = document.getElementById('settings-modal');
     if (m.style.display === 'block') {
-        await SettingsService.setSetting('webbreGemini', document.getElementById('geminiKey').value.trim());
+        // Alleen de modellen worden nog opgeslagen
         await SettingsService.setSetting('webbreGeminiModel', document.getElementById('geminiModel').value);
-        await SettingsService.setSetting('webbreClaude', document.getElementById('claudeKey').value.trim());
         await SettingsService.setSetting('webbreClaudeModel', document.getElementById('claudeModel').value);
         m.style.display = 'none'; showToast('Instellingen opgeslagen', 'success');
     } else { m.style.display = 'block'; }
@@ -293,7 +291,6 @@ function appendMessage(role, content, autoScroll = true) {
 
 async function generateChatTitle(promptText, chatId) {
     try { 
-        // Haal het dynamisch gekozen Gemini-model op voor de titelgenerator
         const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-1.5-pro';
         const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-3-5-sonnet-20240620';
 
@@ -345,7 +342,6 @@ async function startWorkflow() {
     const loader = document.createElement('div'); loader.className = 'workflow-steps'; win.appendChild(loader);
 
     try {
-        // Haal de momenteel geselecteerde modellen op uit de instellingen
         const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-3-5-sonnet-20240620';
         const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-1.5-pro';
 
@@ -388,15 +384,12 @@ async function startWorkflow() {
         const history = chat.messages.filter(m => m.role==='user'||m.role==='ai').map(m => ({ role: m.role==='ai'?'assistant':'user', content: m.content }));
         
         loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_BUSY}</div>`;
-        // Geef het actieve Claude model mee
         const draft = await callClaude([...history, {role:'user', content: prompt}], activeClaudeModel, signal);
         
         loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.GEMINI_BUSY}</div>`;
-        // Geef het actieve Gemini model mee
         const feedback = await callGemini(PROMPTS.GEMINI_REVIEW(prompt, draft), activeGeminiModel, signal);
         
         loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_BUSY}</div>`;
-        // Geef het actieve Claude model mee voor de definitieve herschrijving
         const final = await callClaude([{role:'user', content: PROMPTS.STRIKTE_REWRITE(prompt, draft, feedback)}], activeClaudeModel, signal);
 
         loader.remove();
