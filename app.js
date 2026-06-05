@@ -183,6 +183,7 @@ window.onload = async () => {
         renderAttachments();
     }
 
+    // UPDATE: Miniaturen vergroot naar 60px en kruisjes herpositioneerd
     function renderAttachments() {
         attachmentPreview.innerHTML = '';
         if (currentAttachments.length > 0) {
@@ -193,18 +194,18 @@ window.onload = async () => {
         
         currentAttachments.forEach((file, index) => {
             const wrapper = document.createElement('div');
-            wrapper.style.cssText = 'position: relative; display: inline-block; border: 1px solid #ddd; border-radius: 6px; padding: 2px; background: #fff; flex-shrink: 0;';
+            wrapper.style.cssText = 'position: relative; display: inline-block; border: 1px solid #ddd; border-radius: 8px; padding: 3px; background: #fff; flex-shrink: 0;';
             
             let previewContent = '';
             if (file.isImage) {
-                previewContent = `<img src="data:${file.mimeType};base64,${file.data}" style="height: 35px; width: 35px; object-fit: cover; border-radius: 4px; display: block;">`;
+                previewContent = `<img src="data:${file.mimeType};base64,${file.data}" style="height: 60px; width: 60px; object-fit: cover; border-radius: 6px; display: block;">`;
             } else {
-                previewContent = `<div style="height: 35px; width: 35px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: #f0f0f0; border-radius: 4px;" title="${file.name}">📄</div>`;
+                previewContent = `<div style="height: 60px; width: 60px; display: flex; align-items: center; justify-content: center; font-size: 28px; background: #f0f0f0; border-radius: 6px;" title="${file.name}">📄</div>`;
             }
 
             wrapper.innerHTML = `
                 ${previewContent}
-                <button onclick="removeAttachment(${index})" style="position: absolute; top: -5px; right: -5px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 14px; height: 14px; font-size: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">✕</button>
+                <button onclick="removeAttachment(${index})" style="position: absolute; top: -6px; right: -6px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">✕</button>
             `;
             attachmentPreview.appendChild(wrapper);
         });
