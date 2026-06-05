@@ -44,14 +44,19 @@
     <div id="main-content">
         <div id="chat-window"></div>
         <div id="input-container">
-            <div class="input-wrapper" style="position: relative;">
-                <select id="chatCategory" class="category-select">
-                    <option value="Privé">🏠 Privé</option>
-                    <option value="Werk & school">💼 Werk & school</option>
-                </select>
-                <textarea id="userPrompt" rows="5" placeholder="Stel een vraag... (Shift + Enter voor een nieuwe regel)"></textarea>
+            <div class="input-wrapper" style="position: relative; display: flex; flex-direction: column;">
                 
-                <div id="optimizeContainer" style="position: absolute; top: 10px; right: 10px; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
+                    <select id="chatCategory" class="category-select">
+                        <option value="Privé">🏠 Privé</option>
+                        <option value="Werk & school">💼 Werk & school</option>
+                    </select>
+                    <div id="attachmentPreview" style="display: none; align-items: center; justify-content: flex-end; gap: 8px; overflow-x: auto; padding: 2px;"></div>
+                </div>
+
+                <textarea id="userPrompt" rows="5" placeholder="Stel een vraag... (Shift+Enter voor nieuwe regel, Ctrl+V om plaatje te plakken)"></textarea>
+                
+                <div id="optimizeContainer" style="position: absolute; top: 38px; right: 10px; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s;">
                     <button id="optimizeBtn" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); border: none; border-radius: 15px; padding: 5px 12px; font-size: 0.8rem; font-weight: bold; color: white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 5px;">
                         ✨ Optimaliseer prompt
                     </button>
@@ -60,7 +65,9 @@
                     </button>
                 </div>
 
-                <div class="controls" style="justify-content: flex-end;">
+                <div class="controls" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 5px;">
+                    <input type="file" id="fileAttachment" accept="image/png, image/jpeg, image/webp, application/pdf" style="display: none;" multiple>
+                    <button id="attachBtn" title="Bestand of afbeelding toevoegen" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; padding: 0; color: #666; transition: color 0.2s;">📎</button>
                     <button class="send-btn" id="sendBtn">Verstuur</button>
                 </div>
             </div>
