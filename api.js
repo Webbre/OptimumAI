@@ -1,15 +1,17 @@
-// api.js (fragment)
-export async function callClaude(messages, modelNaam) {
-    try {
-        const app = getApp();
-        const auth = getAuth(app);
-        if (!auth.currentUser) throw new Error("De app ziet niet dat je bent ingelogd.");
+// api.js
+import { getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
-        const functions = getFunctions(app);
+export async function callClaude(messages, model, signal) {
+    try {
+        const functions = getFunctions(getApp());
         const secureCallClaude = httpsCallable(functions, 'secureCallClaude');
         
-        // We sturen nu expliciet het model mee naar de kluis
-        const result = await secureCallClaude({ messages: messages, model: modelNaam });
+        // We sturen nu expliciet het geselecteerde model mee naar de kluis
+        const result = await secureCallClaude({ 
+            messages: messages,
+            model: model 
+        });
         return result.data;
     } catch (error) {
         console.error("Fout in beveiligde Claude aanroep:", error);
@@ -17,17 +19,16 @@ export async function callClaude(messages, modelNaam) {
     }
 }
 
-export async function callGemini(prompt, modelNaam) {
+export async function callGemini(prompt, model, signal) {
     try {
-        const app = getApp();
-        const auth = getAuth(app);
-        if (!auth.currentUser) throw new Error("De app ziet niet dat je bent ingelogd.");
-
-        const functions = getFunctions(app);
+        const functions = getFunctions(getApp());
         const secureCallGemini = httpsCallable(functions, 'secureCallGemini');
 
-        // We sturen nu expliciet het model mee naar de kluis
-        const result = await secureCallGemini({ prompt: prompt, model: modelNaam });
+        // We sturen nu expliciet het geselecteerde model mee naar de kluis
+        const result = await secureCallGemini({ 
+            prompt: prompt,
+            model: model
+        });
         return result.data;
     } catch (error) {
         console.error("Fout in beveiligde Gemini aanroep:", error);
