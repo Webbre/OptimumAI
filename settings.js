@@ -85,7 +85,7 @@ export function maakInstellingenMenu(containerId, userId, logoutActie, instellin
         scheidingsLijn.style.borderTop = '1px solid #eee';
         menu.appendChild(scheidingsLijn);
 
-        const modellenKnop = maakMenuItem('🛠️ API & Modellen', instellingenActie);
+        const modellenKnop = maakMenuItem('🛠️ AI modellen', instellingenActie);
         menu.appendChild(modellenKnop);
     }
 
