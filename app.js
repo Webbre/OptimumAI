@@ -14,10 +14,13 @@ let currentChatId = null;
 let abortController = null;
 let collapsedCategories = new Set(JSON.parse(localStorage.getItem('collapsed_categories') || '[]'));
 
-// Variabelen voor de Optimalisatie flow
+// Optimalisatie
 let originalPromptText = "";
 let typingTimer;
-const typingDelay = 500; // Debounce tijd
+const typingDelay = 500; 
+
+// NIEUW: Bijlages
+let currentAttachments = [];
 
 window.startNewChat = startNewChat;
 window.updateHistoryDisplay = updateHistoryDisplay;
@@ -52,28 +55,24 @@ window.onload = async () => {
         if (user) {
             globalUserId = user.uid;
             document.getElementById('auth-screen').style.display = 'none'; 
-            
             maakInstellingenMenu('sidebar-titel', globalUserId, handleLogout, toggleSettings);
-
             await StorageService.migrateLocalToFirebase();
             await updateHistoryDisplay();
         } else {
             globalUserId = null;
             document.getElementById('auth-screen').style.display = 'flex'; 
             document.getElementById('history-list').innerHTML = ''; 
-            
             const bestaandMenu = document.getElementById('fancy-settings-wrapper');
             if (bestaandMenu) bestaandMenu.remove();
         }
     });
     
     document.getElementById('loginBtn').addEventListener('click', handleLogin);
-    
-    document.getElementById('authPassword').addEventListener('keydown', e => {
-        if (e.key === 'Enter') handleLogin();
-    });
+    document.getElementById('authPassword').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
 
-    document.getElementById('userPrompt').addEventListener('keydown', e => { 
+    const userPromptField = document.getElementById('userPrompt');
+    
+    userPromptField.addEventListener('keydown', e => { 
         if (e.key === 'Enter' && !e.shiftKey) { 
             e.preventDefault(); 
             startWorkflow(); 
@@ -88,12 +87,88 @@ window.onload = async () => {
         const sidebar = document.getElementById('sidebar');
         const btn = document.getElementById('menu-toggle');
         sidebar.classList.toggle('open');
-        if (sidebar.classList.contains('open')) { btn.innerHTML = '✖ Sluiten'; } 
-        else { btn.innerHTML = '☰ Menu'; }
+        if (sidebar.classList.contains('open')) { btn.innerHTML = '✖ Sluiten'; } else { btn.innerHTML = '☰ Menu'; }
     });
 
+    // --- BIJLAGE LOGICA ---
+    const fileAttachment = document.getElementById('fileAttachment');
+    const attachBtn = document.getElementById('attachBtn');
+    const attachmentPreview = document.getElementById('attachmentPreview');
+
+    attachBtn.addEventListener('click', () => fileAttachment.click());
+
+    fileAttachment.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        fileAttachment.value = ''; // reset
+    });
+
+    // Ctrl+V Plak-logica voor screenshots
+    userPromptField.addEventListener('paste', (e) => {
+        if (e.clipboardData && e.clipboardData.files.length > 0) {
+            e.preventDefault(); 
+            handleFiles(e.clipboardData.files);
+        }
+    });
+
+    function handleFiles(files) {
+        for (const file of files) {
+            // Beveiliging: Maximaal 4MB per bestand om crashes in Firebase te voorkomen
+            if (file.size > 4 * 1024 * 1024) {
+                showToast(`Bestand is te groot (max 4MB)`, 'error');
+                continue;
+            }
+            if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+                showToast(`Alleen afbeeldingen en PDF's worden ondersteund`, 'error');
+                continue;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64Data = e.target.result.split(',')[1];
+                currentAttachments.push({
+                    name: file.name || "Screenshot.png",
+                    mimeType: file.type,
+                    data: base64Data,
+                    isImage: file.type.startsWith('image/')
+                });
+                renderAttachments();
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    window.removeAttachment = function(index) {
+        currentAttachments.splice(index, 1);
+        renderAttachments();
+    }
+
+    function renderAttachments() {
+        attachmentPreview.innerHTML = '';
+        if (currentAttachments.length > 0) {
+            attachmentPreview.style.display = 'flex';
+        } else {
+            attachmentPreview.style.display = 'none';
+        }
+        
+        currentAttachments.forEach((file, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position: relative; display: inline-block; border: 1px solid #ddd; border-radius: 6px; padding: 2px; background: #fff; flex-shrink: 0;';
+            
+            let previewContent = '';
+            if (file.isImage) {
+                previewContent = `<img src="data:${file.mimeType};base64,${file.data}" style="height: 35px; width: 35px; object-fit: cover; border-radius: 4px; display: block;">`;
+            } else {
+                previewContent = `<div style="height: 35px; width: 35px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: #f0f0f0; border-radius: 4px;" title="${file.name}">📄</div>`;
+            }
+
+            wrapper.innerHTML = `
+                ${previewContent}
+                <button onclick="removeAttachment(${index})" style="position: absolute; top: -5px; right: -5px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 14px; height: 14px; font-size: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">✕</button>
+            `;
+            attachmentPreview.appendChild(wrapper);
+        });
+    }
+
     // --- OPTIMALISATIE LOGICA ---
-    const userPromptField = document.getElementById('userPrompt');
     const optimizeContainer = document.getElementById('optimizeContainer');
     const optimizeBtn = document.getElementById('optimizeBtn');
     const undoOptimizeBtn = document.getElementById('undoOptimizeBtn');
@@ -129,8 +204,6 @@ window.onload = async () => {
         try {
             const functions = getFunctions(getApp());
             const secureCallClaude = httpsCallable(functions, 'secureCallClaude');
-            
-            // OPLOSSING: We gebruiken nu de actuele, geaccepteerde modelnaam 'claude-haiku-4-5'
             const result = await secureCallClaude({ 
                 messages: [{ role: "user", content: "Zie systeeminstructie." }],
                 system: PROMPTS.OPTIMIZE_PROMPT(currentText),
@@ -168,16 +241,13 @@ window.onload = async () => {
 async function handleLogin() {
     const email = document.getElementById('authEmail').value.trim();
     const password = document.getElementById('authPassword').value;
-    
     if (!email || !password) { showToast('Vul alle velden in'); return; }
-    
     try {
         const btn = document.getElementById('loginBtn');
         btn.innerText = 'Bezig met inloggen...';
         await signInWithEmailAndPassword(auth, email, password);
         showToast('Succesvol ingelogd!', 'success');
     } catch (error) {
-        console.error("Inlogfout:", error);
         showToast('E-mailadres of wachtwoord is onjuist');
     } finally {
         document.getElementById('loginBtn').innerText = 'Inloggen';
@@ -215,7 +285,6 @@ async function handleCategoryDropdownChange(event) {
 
 function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
     if (chatsArray.length === 0) return;
-    
     const header = document.createElement('div');
     header.className = 'category-header';
     const isCollapsed = collapsedCategories.has(categoryId);
@@ -232,7 +301,6 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
     if (!isCollapsed) {
         const container = document.createElement('div');
         container.className = 'category-group-container';
-        
         if (categoryId === 'pinned') {
             chatsArray.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)).forEach(c => {
                 container.appendChild(createHistoryElement(c));
@@ -244,13 +312,11 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
                 if (!groupedByDate[d]) groupedByDate[d] = [];
                 groupedByDate[d].push(chat);
             });
-
             const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
                 if (a === 'Onbekende datum') return 1; if (b === 'Onbekende datum') return -1;
                 const [dayA, monthA, yearA] = a.split('-'); const [dayB, monthB, yearB] = b.split('-');
                 return new Date(`${yearB}-${monthB}-${dayB}`) - new Date(`${yearA}-${monthA}-${dayA}`);
             });
-
             for (const date of sortedDates) {
                 const dateHeader = document.createElement('div');
                 dateHeader.className = 'date-header'; dateHeader.innerText = date;
@@ -266,15 +332,12 @@ function renderCategoryGroup(title, chatsArray, categoryId, listElement) {
 
 async function updateHistoryDisplay() {
     if (!globalUserId) return; 
-    
     const rawChats = await StorageService.getChats();
     const chats = [];
     
     for (const c of rawChats) {
         if ((c.messages && c.messages.length > 0) || c.id === currentChatId) {
-            if (c.userId === globalUserId || !c.userId) { 
-                chats.push(c);
-            }
+            if (c.userId === globalUserId || !c.userId) { chats.push(c); }
         }
     }
 
@@ -371,7 +434,8 @@ async function generateChatTitle(promptText, chatId) {
 
         let rawText = '';
         try { 
-            rawText = await callGemini(PROMPTS.TITEL(promptText), activeGeminiModel, null); 
+            // Geen bestanden nodig voor de titel
+            rawText = await callGemini(PROMPTS.TITEL(promptText), null, activeGeminiModel, null); 
         } catch (geminiFout) {
             rawText = await callClaude([{role: 'user', content: PROMPTS.TITEL(promptText)}], activeClaudeModel, null);
         }
@@ -402,7 +466,7 @@ async function startNewChat() {
 async function startWorkflow() {
     if (abortController) { abortController.abort(); return; }
     const prompt = document.getElementById('userPrompt').value.trim();
-    if (!prompt) return;
+    if (!prompt && currentAttachments.length === 0) return; // Sta verzenden toe als er alleen bestanden zijn
     
     const originalPrompt = prompt; 
     document.getElementById('userPrompt').value = '';
@@ -412,7 +476,14 @@ async function startWorkflow() {
     const btn = document.getElementById('sendBtn'); 
     btn.innerText = 'Stop'; btn.classList.add('stop-btn');
     
-    appendMessage('user', prompt); 
+    // Zorg dat de bestandsnamen visueel in de chat komen, maar we strippen de zware base64!
+    let displayPrompt = prompt;
+    if (currentAttachments.length > 0) {
+        const fileNames = currentAttachments.map(f => f.name).join(', ');
+        displayPrompt = `*[Bijlages toegevoegd: ${fileNames}]*\n\n${prompt}`;
+    }
+
+    appendMessage('user', displayPrompt); 
     const win = document.getElementById('chat-window'); 
     const loader = document.createElement('div'); loader.className = 'workflow-steps'; win.appendChild(loader);
 
@@ -427,7 +498,7 @@ async function startWorkflow() {
             const newChatObject = { 
                 id: currentChatId, 
                 userId: globalUserId,
-                title: prompt.substring(0,22) + '...', 
+                title: prompt ? prompt.substring(0,22) + '...' : 'Bijlage analyse...', 
                 category: selectedCategory,
                 date: new Date().toLocaleDateString('nl-NL'),
                 createdAt: Date.now(), 
@@ -436,33 +507,47 @@ async function startWorkflow() {
             
             await StorageService.saveChat(newChatObject);
             await updateHistoryDisplay(); 
-            
-            generateChatTitle(prompt, currentChatId);
+            if (prompt) generateChatTitle(prompt, currentChatId);
         }
 
         const chats = await StorageService.getChats(); 
         let chat = chats.find(c => c.id === currentChatId);
-        
-        if (!chat) {
-            chat = { 
-                id: currentChatId, 
-                userId: globalUserId,
-                title: prompt.substring(0,22) + '...', 
-                category: document.getElementById('chatCategory').value || 'Privé',
-                date: new Date().toLocaleDateString('nl-NL'),
-                createdAt: Date.now(),
-                messages: [] 
-            };
-        }
         if (!chat.messages) chat.messages = [];
 
+        // Bouw de geschiedenis op voor Claude
         const history = chat.messages.filter(m => m.role==='user'||m.role==='ai').map(m => ({ role: m.role==='ai'?'assistant':'user', content: m.content }));
+
+        // Multimodale pakketjes inpakken
+        let claudeContent = [];
+        let geminiParts = [];
+
+        if (currentAttachments.length > 0) {
+            currentAttachments.forEach(file => {
+                if (file.isImage) {
+                    claudeContent.push({ type: "image", source: { type: "base64", media_type: file.mimeType, data: file.data }});
+                } else if (file.mimeType === "application/pdf") {
+                    claudeContent.push({ type: "document", source: { type: "base64", media_type: file.mimeType, data: file.data }});
+                }
+                geminiParts.push({ inlineData: { mimeType: file.mimeType, data: file.data }});
+            });
+        }
         
+        if (prompt) {
+            claudeContent.push({ type: "text", text: prompt });
+            geminiParts.push({ text: prompt });
+        }
+
+        // We ruimen de frontend bijlages direct op
+        currentAttachments = [];
+        document.getElementById('attachmentPreview').innerHTML = '';
+        document.getElementById('attachmentPreview').style.display = 'none';
+
         loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_BUSY}</div>`;
-        const draft = await callClaude([...history, {role:'user', content: prompt}], activeClaudeModel, signal);
+        const draft = await callClaude([...history, {role:'user', content: claudeContent}], activeClaudeModel, signal);
         
         loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.GEMINI_BUSY}</div>`;
-        const feedback = await callGemini(PROMPTS.GEMINI_REVIEW(prompt, draft), activeGeminiModel, signal);
+        // Let op: Bij feedback sturen we géén parts/bestanden meer mee, alleen de tekst
+        const feedback = await callGemini(PROMPTS.GEMINI_REVIEW(prompt, draft), null, activeGeminiModel, signal);
         
         loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_BUSY}</div>`;
         const final = await callClaude([{role:'user', content: PROMPTS.STRIKTE_REWRITE(prompt, draft, feedback)}], activeClaudeModel, signal);
@@ -472,7 +557,8 @@ async function startWorkflow() {
         const sDiv = appendMessage('steps', stappen, false); appendMessage('ai', final, false);
         win.scrollTo({ top: sDiv.offsetTop - 20, behavior: 'smooth' });
 
-        chat.messages.push({ role: 'user', content: prompt }, { role: 'steps', content: stappen }, { role: 'ai', content: final });
+        // Sla het bericht permanent op, zonder de zware base64 afbeeldingen!
+        chat.messages.push({ role: 'user', content: displayPrompt }, { role: 'steps', content: stappen }, { role: 'ai', content: final });
         
         await StorageService.updateChatField(currentChatId, 'messages', chat.messages);
         await updateHistoryDisplay();
