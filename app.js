@@ -116,15 +116,14 @@ async function handleLogout() {
 }
 
 async function loadKeys() {
-    // Alleen de modellen worden nog ingeladen
-    document.getElementById('claudeModel').value = await SettingsService.getSetting('webbreClaudeModel') || 'claude-3-5-sonnet-20240620';
-    document.getElementById('geminiModel').value = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-1.5-pro';
+    // Aangepast naar de nieuwste default-modellen
+    document.getElementById('claudeModel').value = await SettingsService.getSetting('webbreClaudeModel') || 'claude-sonnet-4-6';
+    document.getElementById('geminiModel').value = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-3.5-flash';
 }
 
 async function toggleSettings() {
     const m = document.getElementById('settings-modal');
     if (m.style.display === 'block') {
-        // Alleen de modellen worden nog opgeslagen
         await SettingsService.setSetting('webbreGeminiModel', document.getElementById('geminiModel').value);
         await SettingsService.setSetting('webbreClaudeModel', document.getElementById('claudeModel').value);
         m.style.display = 'none'; showToast('Instellingen opgeslagen', 'success');
@@ -291,8 +290,9 @@ function appendMessage(role, content, autoScroll = true) {
 
 async function generateChatTitle(promptText, chatId) {
     try { 
-        const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-1.5-pro';
-        const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-3-5-sonnet-20240620';
+        // Aangepast naar de nieuwste default-modellen
+        const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-3.5-flash';
+        const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-sonnet-4-6';
 
         let rawText = '';
         try { 
@@ -342,8 +342,9 @@ async function startWorkflow() {
     const loader = document.createElement('div'); loader.className = 'workflow-steps'; win.appendChild(loader);
 
     try {
-        const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-3-5-sonnet-20240620';
-        const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-1.5-pro';
+        // Aangepast naar de nieuwste default-modellen
+        const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-sonnet-4-6';
+        const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-3.5-flash';
 
         if (!currentChatId) {
             currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
