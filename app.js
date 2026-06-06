@@ -183,7 +183,6 @@ window.onload = async () => {
         renderAttachments();
     }
 
-    // UPDATE: Miniaturen vergroot naar 60px en kruisjes herpositioneerd
     function renderAttachments() {
         attachmentPreview.innerHTML = '';
         if (currentAttachments.length > 0) {
@@ -264,7 +263,7 @@ window.onload = async () => {
                 showToast("Prompt was al optimaal", "info");
             }
         } catch (error) {
-            console.error("Optimalisatie gefaald:", error);
+            console.error("Optimalisatie gefaaled:", error);
             showToast("Kon niet optimaliseren");
         } finally {
             optimizeBtn.innerHTML = '✨ Optimaliseer prompt';
@@ -531,6 +530,9 @@ async function startWorkflow() {
     try {
         const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-sonnet-4-6';
         const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-3.5-flash';
+        
+        // INTERFACE CHECK: Kijken of het schuifje aan of uit staat
+        const useDualAI = document.getElementById('workflowToggle').checked;
 
         if (!currentChatId) {
             currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -580,21 +582,36 @@ async function startWorkflow() {
         document.getElementById('attachmentPreview').innerHTML = '';
         document.getElementById('attachmentPreview').style.display = 'none';
 
-        loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_BUSY}</div>`;
-        const draft = await callClaude([...history, {role:'user', content: claudeContent}], activeClaudeModel, signal);
-        
-        loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.GEMINI_BUSY}</div>`;
-        const feedback = await callGemini(PROMPTS.GEMINI_REVIEW(prompt, draft), null, activeGeminiModel, signal);
-        
-        loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_BUSY}</div>`;
-        const final = await callClaude([{role:'user', content: PROMPTS.STRIKTE_REWRITE(prompt, draft, feedback)}], activeClaudeModel, signal);
+        let finalResponseText = "";
+        let stappen = [];
+
+        // DYNAMISCHE FLOW ROUTING
+        if (useDualAI) {
+            // 🧠 Dual-AI Modus: Volledige revisie en optimalisatie keten (Claude -> Gemini -> Claude)
+            loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_BUSY}</div>`;
+            const draft = await callClaude([...history, {role:'user', content: claudeContent}], activeClaudeModel, signal);
+            
+            loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.GEMINI_BUSY}</div>`;
+            const feedback = await callGemini(PROMPTS.GEMINI_REVIEW(prompt, draft), null, activeGeminiModel, signal);
+            
+            loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_BUSY}</div>`;
+            finalResponseText = await callClaude([{role:'user', content: PROMPTS.STRIKTE_REWRITE(prompt, draft, feedback)}], activeClaudeModel, signal);
+
+            stappen = [`<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_DONE}`];
+        } else {
+            // 👤 Claude-Only Modus: Directe en vliegensvlugge afhandeling
+            loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> Claude is aan het nadenken...</div>`;
+            finalResponseText = await callClaude([...history, {role:'user', content: claudeContent}], activeClaudeModel, signal);
+            
+            stappen = [`<span class="workflow-done">✓</span> Claude antwoord gegenereerd`];
+        }
 
         loader.remove();
-        const stappen = [`<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_DONE}`];
-        const sDiv = appendMessage('steps', stappen, false); appendMessage('ai', final, false);
+        const sDiv = appendMessage('steps', stappen, false); 
+        appendMessage('ai', finalResponseText, false);
         win.scrollTo({ top: sDiv.offsetTop - 20, behavior: 'smooth' });
 
-        chat.messages.push({ role: 'user', content: displayPrompt }, { role: 'steps', content: stappen }, { role: 'ai', content: final });
+        chat.messages.push({ role: 'user', content: displayPrompt }, { role: 'steps', content: stappen }, { role: 'ai', content: finalResponseText });
         
         await StorageService.updateChatField(currentChatId, 'messages', chat.messages);
         await updateHistoryDisplay();
