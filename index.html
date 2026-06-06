@@ -15,46 +15,6 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <link rel="stylesheet" href="style.css">
-
-    <style>
-        .fancy-switch {
-            position: relative;
-            display: inline-block;
-            width: 42px;
-            height: 22px;
-        }
-        .fancy-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .fancy-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #cbd5e0;
-            transition: .3s ease;
-            border-radius: 22px;
-        }
-        .fancy-slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .3s ease;
-            border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-        }
-        .fancy-switch input:checked + .fancy-slider {
-            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-        }
-        .fancy-switch input:checked + .fancy-slider:before {
-            transform: translateX(20px);
-        }
-    </style>
 </head>
 <body>
 
@@ -78,22 +38,22 @@
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Zoek in chats...">
         </div>
-        <div id="history-list" style="margin-bottom: auto;"></div>
+        <div id="history-list"></div>
     </div>
 
     <div id="main-content">
         <div id="chat-window"></div>
         <div id="input-container">
-            <div class="input-wrapper" style="position: relative; display: flex; flex-direction: column;">
+            <div class="input-wrapper">
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; flex-wrap: wrap; gap: 5px;">
                     <div style="display: flex; align-items: center; gap: 15px;">
-                        <select id="chatCategory" class="category-select" style="margin: 0;">
+                        <select id="chatCategory" class="category-select">
                             <option value="Privé">🏠 Privé</option>
                             <option value="Werk & school">💼 Werk & school</option>
                         </select>
                         
-                        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: bold; color: #4a5568; user-select: none;">
+                        <div class="dual-ai-container">
                             <span>🧠 Dual-AI</span>
                             <label class="fancy-switch">
                                 <input type="checkbox" id="workflowToggle">
@@ -101,38 +61,34 @@
                             </label>
                         </div>
                     </div>
-                    <div id="attachmentPreview" style="display: none; align-items: center; justify-content: flex-end; gap: 10px; padding: 2px; flex-wrap: wrap;"></div>
+                    <div id="attachmentPreview"></div>
                 </div>
 
                 <textarea id="userPrompt" rows="5" placeholder="Stel een vraag... (Shift + Enter voor een nieuwe regel)"></textarea>
                 
-                <div id="optimizeContainer" style="position: absolute; top: 38px; right: 10px; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s;">
-                    <button id="optimizeBtn" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); border: none; border-radius: 15px; padding: 5px 12px; font-size: 0.8rem; font-weight: bold; color: white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 5px;">
-                        ✨ Optimaliseer prompt
-                    </button>
-                    <button id="undoOptimizeBtn" style="display: none; background: #f0f0f0; border: 1px solid #ccc; border-radius: 15px; padding: 5px 12px; font-size: 0.8rem; color: #555; cursor: pointer;">
-                        ↩ Herstellen
-                    </button>
+                <div id="optimizeContainer">
+                    <button id="optimizeBtn">✨ Optimaliseer prompt</button>
+                    <button id="undoOptimizeBtn">↩ Herstellen</button>
                 </div>
 
-                <div class="controls" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 5px; position: relative;">
+                <div class="controls">
                     <input type="file" id="pdfAttachment" accept="application/pdf" style="display: none;" multiple>
                     <input type="file" id="imgAttachment" accept="image/png, image/jpeg, image/webp" style="display: none;" multiple>
                     
-                    <div id="attachMenuWrapper" style="position: relative; display: inline-flex; align-items: center;">
-                        <button id="attachToggleBtn" title="Bestand toevoegen" style="background: #f0f0f0; border: none; border-radius: 10px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #555; transition: transform 0.3s ease, background-color 0.2s;">
+                    <div id="attachMenuWrapper">
+                        <button id="attachToggleBtn" title="Bestand toevoegen">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
                         </button>
 
-                        <div id="attachMenu" style="position: absolute; bottom: 130%; left: 0; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 170px; z-index: 1000; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;">
-                            <button id="addPdfBtn" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 16px; border: none; background: transparent; text-align: left; cursor: pointer; font-size: 0.95rem; color: #333; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f5f5f5'" onmouseout="this.style.backgroundColor='transparent'">
+                        <div id="attachMenu">
+                            <button id="addPdfBtn" class="attach-menu-btn">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                                 PDF toevoegen
                             </button>
-                            <button id="addImgBtn" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 16px; border: none; background: transparent; text-align: left; cursor: pointer; font-size: 0.95rem; color: #333; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f5f5f5'" onmouseout="this.style.backgroundColor='transparent'">
+                            <button id="addImgBtn" class="attach-menu-btn">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                                 Foto toevoegen
                             </button>
