@@ -383,9 +383,21 @@ async function updateHistoryDisplay() {
     const rawChats = await StorageService.getChats();
     const chats = [];
     
+    // Jouw specifieke Admin ID (uit settings.js)
+    const adminUID = 'quPw1vZznYZoiD23stDz7cng0ND3';
+    
     for (const c of rawChats) {
         if ((c.messages && c.messages.length > 0) || c.id === currentChatId) {
-            if (c.userId === globalUserId || !c.userId) { chats.push(c); }
+            
+            // FIX: Strikte scheiding van gebruikers!
+            if (c.userId === globalUserId) { 
+                // De chat is expliciet van de ingelogde gebruiker
+                chats.push(c); 
+            } else if (!c.userId && globalUserId === adminUID) {
+                // De chat is van vroeger (geen eigenaar). Toon deze ALLEEN aan Ewout.
+                chats.push(c);
+            }
+            
         }
     }
 
@@ -403,7 +415,6 @@ async function updateHistoryDisplay() {
     renderCategoryGroup('🏠 Privé', priveChats, 'prive', list);
     renderCategoryGroup('💼 Werk & school', werkChats, 'werk', list);
 }
-
 function createHistoryElement(chat) {
     const item = document.createElement('div'); 
     item.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
