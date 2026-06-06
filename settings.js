@@ -47,7 +47,7 @@ export function maakInstellingenMenu(containerId, userId, logoutActie, instellin
         scheidingsLijn.className = 'settings-divider';
         menu.appendChild(scheidingsLijn);
 
-        const modellenKnop = maakMenuItem('🛠️ API & Modellen', instellingenActie);
+        const modellenKnop = maakMenuItem('🛠️ AI modellen', instellingenActie);
         menu.appendChild(modellenKnop);
     }
 
