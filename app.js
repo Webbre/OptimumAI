@@ -28,7 +28,6 @@ window.toggleSettings = toggleSettings;
 window.startWorkflow = startWorkflow;
 window.handleCategoryDropdownChange = handleCategoryDropdownChange;
 
-// UPDATE: De welcome-container laadt nu jouw eigen .svg bestanden in
 function getWelcomeScreenHTML() {
     return `
         <div class="welcome-container">
@@ -96,7 +95,6 @@ window.onload = async () => {
         if (sidebar.classList.contains('open')) { btn.innerHTML = '✖ Sluiten'; } else { btn.innerHTML = '☰ Menu'; }
     });
 
-    // --- BIJLAGE LOGICA MET MENU ---
     const pdfAttachment = document.getElementById('pdfAttachment');
     const imgAttachment = document.getElementById('imgAttachment');
     const attachToggleBtn = document.getElementById('attachToggleBtn');
@@ -216,7 +214,6 @@ window.onload = async () => {
         });
     }
 
-    // --- OPTIMALISATIE LOGICA ---
     const optimizeContainer = document.getElementById('optimizeContainer');
     const optimizeBtn = document.getElementById('optimizeBtn');
     const undoOptimizeBtn = document.getElementById('undoOptimizeBtn');
@@ -269,7 +266,7 @@ window.onload = async () => {
                 showToast("Prompt was al optimaal", "info");
             }
         } catch (error) {
-            console.error("Optimalisatie gefaaled:", error);
+            console.error("Optimalisatie gefaald:", error);
             showToast("Kon niet optimaliseren");
         } finally {
             optimizeBtn.innerHTML = '✨ Optimaliseer prompt';
@@ -383,21 +380,15 @@ async function updateHistoryDisplay() {
     const rawChats = await StorageService.getChats();
     const chats = [];
     
-    // Jouw specifieke Admin ID (uit settings.js)
     const adminUID = 'quPw1vZznYZoiD23stDz7cng0ND3';
     
     for (const c of rawChats) {
         if ((c.messages && c.messages.length > 0) || c.id === currentChatId) {
-            
-            // FIX: Strikte scheiding van gebruikers!
             if (c.userId === globalUserId) { 
-                // De chat is expliciet van de ingelogde gebruiker
                 chats.push(c); 
             } else if (!c.userId && globalUserId === adminUID) {
-                // De chat is van vroeger (geen eigenaar). Toon deze ALLEEN aan Ewout.
                 chats.push(c);
             }
-            
         }
     }
 
@@ -415,6 +406,7 @@ async function updateHistoryDisplay() {
     renderCategoryGroup('🏠 Privé', priveChats, 'prive', list);
     renderCategoryGroup('💼 Werk & school', werkChats, 'werk', list);
 }
+
 function createHistoryElement(chat) {
     const item = document.createElement('div'); 
     item.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
@@ -570,6 +562,12 @@ async function startWorkflow() {
 
         const chats = await StorageService.getChats(); 
         let chat = chats.find(c => c.id === currentChatId);
+        
+        // VEILIGHEIDSNET: Controleert of de net aangemaakte chat beschikbaar is en maakt hem lokaal aan als dit niet zo is.
+        if (!chat) {
+            chat = { id: currentChatId, userId: globalUserId, messages: [] };
+        }
+        
         if (!chat.messages) chat.messages = [];
 
         const history = chat.messages.filter(m => m.role==='user'||m.role==='ai').map(m => ({ role: m.role==='ai'?'assistant':'user', content: m.content }));
