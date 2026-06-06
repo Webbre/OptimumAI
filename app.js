@@ -32,7 +32,7 @@ function getWelcomeScreenHTML() {
     return `
         <div class="welcome-container">
             <div class="welcome-title">Ewout's Optimum AI tool</div>
-            <div class="welcome-subtitle">De denkkracht van Claude en Gemini gebundeld</div>
+            <div class="welcome-subtitle">De denkkracht van Claude en Gemini gebundeld.</div>
         </div>
     `;
 }
