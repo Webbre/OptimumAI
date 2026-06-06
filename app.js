@@ -28,11 +28,22 @@ window.toggleSettings = toggleSettings;
 window.startWorkflow = startWorkflow;
 window.handleCategoryDropdownChange = handleCategoryDropdownChange;
 
+// UPDATE: Het startscherm toont nu de officiële Claude en Gemini logo's via strakke SVG-definities
 function getWelcomeScreenHTML() {
     return `
         <div class="welcome-container">
             <div class="welcome-title">Ewout's Optimum AI tool</div>
-            <div class="welcome-subtitle">De denkkracht van Claude en Gemini gebundeld.</div>
+            <div class="welcome-subtitle">De denkkracht van Claude en Gemini gebundeld</div>
+            
+            <div class="welcome-brand-logos">
+                <svg class="ai-logo-svg" viewBox="0 0 24 24" fill="#D97756" xmlns="http://www.w3.org/2000/svg" title="Anthropic Claude">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM15.62 16.5H13.78L12.92 13.9H11.08L10.22 16.5H8.38L11.1 8.5H12.9L15.62 16.5ZM12.44 12.38L12 10.98L11.56 12.38H12.44Z"/>
+                </svg>
+                
+                <svg class="ai-logo-svg" viewBox="0 0 24 24" fill="#4285F4" xmlns="http://www.w3.org/2000/svg" title="Google Gemini">
+                    <path d="M12 2L14.77 9.23L22 12L14.77 14.77L12 22L9.23 14.77L2 12L9.23 9.23L12 2Z"/>
+                </svg>
+            </div>
         </div>
     `;
 }
@@ -530,8 +541,6 @@ async function startWorkflow() {
     try {
         const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-sonnet-4-6';
         const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-3.5-flash';
-        
-        // INTERFACE CHECK: Kijken of het schuifje aan of uit staat
         const useDualAI = document.getElementById('workflowToggle').checked;
 
         if (!currentChatId) {
@@ -585,9 +594,7 @@ async function startWorkflow() {
         let finalResponseText = "";
         let stappen = [];
 
-        // DYNAMISCHE FLOW ROUTING
         if (useDualAI) {
-            // 🧠 Dual-AI Modus: Volledige revisie en optimalisatie keten (Claude -> Gemini -> Claude)
             loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_BUSY}</div>`;
             const draft = await callClaude([...history, {role:'user', content: claudeContent}], activeClaudeModel, signal);
             
@@ -599,10 +606,8 @@ async function startWorkflow() {
 
             stappen = [`<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_DONE}`];
         } else {
-            // 👤 Claude-Only Modus: Directe en vliegensvlugge afhandeling
             loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> Claude is aan het nadenken...</div>`;
             finalResponseText = await callClaude([...history, {role:'user', content: claudeContent}], activeClaudeModel, signal);
-            
             stappen = [`<span class="workflow-done">✓</span> Claude antwoord gegenereerd`];
         }
 
