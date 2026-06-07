@@ -604,15 +604,31 @@ async function startWorkflow() {
         let finalResponseText = "";
         let stappen = [];
 
-        if (useDualAI) {
+       if (useDualAI) {
             loader.innerHTML = `<div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.CLAUDE_BUSY}</div>`;
             const draft = await callClaude([...history, {role:'user', content: claudeContent}], activeClaudeModel, signal);
             
+            // Creëer een nieuwe array voor Gemini die de originele afbeeldingen bevat + de review tekst
+            let reviewGeminiParts = [];
+            geminiParts.forEach(part => { 
+                if (part.inlineData) reviewGeminiParts.push(part); 
+            });
+            reviewGeminiParts.push({ text: PROMPTS.GEMINI_REVIEW(prompt, draft) });
+
             loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.GEMINI_BUSY}</div>`;
-            const feedback = await callGemini(PROMPTS.GEMINI_REVIEW(prompt, draft), null, activeGeminiModel, signal);
             
+            // Stuur 'null' als eerste parameter, omdat de tekst nu netjes in de 'reviewGeminiParts' zit verwerkt
+            const feedback = await callGemini(null, reviewGeminiParts, activeGeminiModel, signal);
+            
+            // Creëer een nieuwe array voor de eindversie van Claude inclusief de afbeeldingen
+            let rewriteClaudeContent = [];
+            claudeContent.forEach(item => { 
+                if (item.type === "image" || item.type === "document") rewriteClaudeContent.push(item); 
+            });
+            rewriteClaudeContent.push({ type: "text", text: PROMPTS.STRIKTE_REWRITE(prompt, draft, feedback) });
+
             loader.innerHTML = `<div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}</div><div class="workflow-step"><span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}</div><div class="workflow-step"><div class="spinner"></div> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_BUSY}</div>`;
-            finalResponseText = await callClaude([{role:'user', content: PROMPTS.STRIKTE_REWRITE(prompt, draft, feedback)}], activeClaudeModel, signal);
+            finalResponseText = await callClaude([{role:'user', content: rewriteClaudeContent}], activeClaudeModel, signal);
 
             stappen = [`<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.CLAUDE_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.GEMINI_DONE}`, `<span class="workflow-done">✓</span> ${WORKFLOW_STEPS_TEXTS.OPTIMIZE_DONE}`];
         } else {
