@@ -108,9 +108,7 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
 .send-btn:hover { background-color: #1A7BAE; }
 .stop-btn { background-color: #cc0000 !important; }
 
-/* --- NIEUWE COMPONENTEN --- */
-
-/* Segmented Control voor AI Keuze */
+/* --- AI MODE SELECTOR (GESEGMENTEERD MET LOGO'S) --- */
 .ai-mode-selector {
     display: inline-flex;
     position: relative;
@@ -137,6 +135,8 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
     transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     z-index: 1;
 }
+
+/* UPDATE: Breedtes geoptimaliseerd voor de tekst 'Claude & Gemini' */
 #mode-claude:checked ~ .ai-mode-slider { transform: translateX(0); width: 95px; }
 #mode-dual:checked ~ .ai-mode-slider { transform: translateX(95px); width: 175px; }
 .ai-mode-selector input[type="radio"]:checked + label { color: #2094D0; }
@@ -197,7 +197,6 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
 #settings-modal button { background-color: #2094D0; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; transition: background 0.3s; }
 #settings-modal button:hover { background: #1A7BAE; }
 
-/* Inlogscherm */
 #auth-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #F4F9EB; z-index: 9999; display: flex; align-items: center; justify-content: center; }
 .auth-box { background: white; padding: 35px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 2px solid #E2E8F0; width: 100%; max-width: 340px; text-align: center; box-sizing: border-box; }
 .auth-box h2 { color: #2094D0; margin: 5px 0; font-size: 22px; }
