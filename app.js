@@ -28,6 +28,7 @@ window.toggleSettings = toggleSettings;
 window.startWorkflow = startWorkflow;
 window.handleCategoryDropdownChange = handleCategoryDropdownChange;
 
+// De welcome-container laadt nu jouw eigen .svg bestanden in
 function getWelcomeScreenHTML() {
     return `
         <div class="welcome-container">
@@ -95,6 +96,7 @@ window.onload = async () => {
         if (sidebar.classList.contains('open')) { btn.innerHTML = '✖ Sluiten'; } else { btn.innerHTML = '☰ Menu'; }
     });
 
+    // --- BIJLAGE LOGICA MET MENU ---
     const pdfAttachment = document.getElementById('pdfAttachment');
     const imgAttachment = document.getElementById('imgAttachment');
     const attachToggleBtn = document.getElementById('attachToggleBtn');
@@ -214,6 +216,7 @@ window.onload = async () => {
         });
     }
 
+    // --- OPTIMALISATIE LOGICA ---
     const optimizeContainer = document.getElementById('optimizeContainer');
     const optimizeBtn = document.getElementById('optimizeBtn');
     const undoOptimizeBtn = document.getElementById('undoOptimizeBtn');
@@ -539,7 +542,10 @@ async function startWorkflow() {
     try {
         const activeClaudeModel = await SettingsService.getSetting('webbreClaudeModel') || 'claude-sonnet-4-6';
         const activeGeminiModel = await SettingsService.getSetting('webbreGeminiModel') || 'gemini-3.5-flash';
-        const useDualAI = document.getElementById('workflowToggle').checked;
+        
+        // Nieuwe logica voor de gesegmenteerde knop
+        const modeElement = document.querySelector('input[name="ai-workflow"]:checked');
+        const useDualAI = modeElement && modeElement.value === 'dual';
 
         if (!currentChatId) {
             currentChatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
