@@ -23,7 +23,7 @@ body {
     display: none;
     background-color: #EBF5FB;
     border-bottom: 2px solid #E2E8F0;
-    padding: 5px 20px; /* Aangepast voor logo-vrijheid */
+    padding: 5px 20px; 
     align-items: center;
     justify-content: space-between;
     height: 65px;
@@ -65,7 +65,7 @@ body {
 .welcome-title { color: #2094D0; font-size: 32px; font-weight: bold; margin-bottom: 10px; }
 .welcome-subtitle { color: #4A5568; font-size: 16px; line-height: 1.5; }
 
-/* Styling voor de nieuwe SVG icoontjes op het startscherm */
+/* Styling voor de SVG icoontjes op het startscherm */
 .welcome-brand-logos { display: flex; align-items: center; gap: 30px; margin-top: 30px; }
 .ai-logo-img { height: 32px; opacity: 0.7; object-fit: contain; transition: opacity 0.3s ease, transform 0.3s ease; cursor: default; }
 .ai-logo-img:hover { opacity: 1; transform: translateY(-2px); }
@@ -109,18 +109,44 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
 .stop-btn { background-color: #cc0000 !important; }
 
 /* --- NIEUWE COMPONENTEN --- */
-.dual-ai-container { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: bold; color: #4a5568; user-select: none; }
-.fancy-switch { position: relative; display: inline-block; width: 42px; height: 22px; }
-.fancy-switch input { opacity: 0; width: 0; height: 0; }
-.fancy-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e0; transition: .3s ease; border-radius: 22px; }
-.fancy-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s ease; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-.fancy-switch input:checked + .fancy-slider { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
-.fancy-switch input:checked + .fancy-slider:before { transform: translateX(20px); }
 
+/* Segmented Control voor AI Keuze */
+.ai-mode-selector {
+    display: inline-flex;
+    position: relative;
+    background-color: #e2e8f0;
+    border-radius: 30px;
+    padding: 3px;
+    user-select: none;
+    height: 34px;
+    box-sizing: border-box;
+}
+.ai-mode-selector input[type="radio"] { display: none; }
+.ai-mode-label {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 16px; font-size: 0.85rem; font-weight: bold;
+    color: #4a5568; cursor: pointer; transition: color 0.3s ease;
+    height: 100%;
+}
+.mode-icon { height: 16px; width: auto; }
+.ai-mode-slider {
+    position: absolute; top: 3px; bottom: 3px; left: 3px;
+    background-color: #ffffff; border-radius: 26px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    z-index: 1;
+}
+#mode-claude:checked ~ .ai-mode-slider { transform: translateX(0); width: 95px; }
+#mode-dual:checked ~ .ai-mode-slider { transform: translateX(95px); width: 130px; }
+.ai-mode-selector input[type="radio"]:checked + label { color: #2094D0; }
+
+/* Optimaliseer Knoppen */
 #optimizeContainer { position: absolute; top: 38px; right: 10px; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s; }
 #optimizeBtn { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); border: none; border-radius: 15px; padding: 5px 12px; font-size: 0.8rem; font-weight: bold; color: white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 5px; }
 #undoOptimizeBtn { display: none; background: #f0f0f0; border: 1px solid #ccc; border-radius: 15px; padding: 5px 12px; font-size: 0.8rem; color: #555; cursor: pointer; }
 
+/* Attachment Menu */
 #attachMenuWrapper { position: relative; display: inline-flex; align-items: center; }
 #attachToggleBtn { background: #f0f0f0; border: none; border-radius: 10px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #555; transition: transform 0.3s ease, background-color 0.2s; }
 #attachMenu { position: absolute; bottom: 130%; left: 0; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 170px; z-index: 1000; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s; }
@@ -128,6 +154,7 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
 .attach-menu-btn:hover { background-color: #f5f5f5; }
 #attachmentPreview { display: none; align-items: center; justify-content: flex-end; gap: 10px; padding: 2px; flex-wrap: wrap; }
 
+/* Settings Menu */
 .settings-wrapper { position: relative; display: inline-flex; align-items: center; margin-left: auto; margin-right: 5px; }
 .settings-icon { cursor: pointer; font-size: 1.2rem; transition: transform 0.3s ease; }
 .settings-icon.open { transform: rotate(90deg); }
