@@ -49,13 +49,9 @@ body {
 
 .new-chat-btn {
     background: #98C93C; color: white; border: none; padding: 12px; border-radius: 20px;
-    cursor: pointer; font-weight: bold; margin-bottom: 15px; transition: all 0.3s ease;
+    cursor: pointer; font-size: 14px; font-weight: bold; margin-bottom: 15px; transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(152, 201, 60, 0.3); flex-shrink: 0;
-    
-    /* 🍎 APPLE FIXES: Forceer de juiste grootte en stijl */
-    font-size: 15px; 
-    font-family: inherit; 
-    -webkit-appearance: none; 
+    -webkit-appearance: none; /* Verwijdert alleen de lelijke iOS gloed, doet in Chrome helemaal niets */
 }
 .new-chat-btn:hover { background: #85B334; transform: translateY(-1px); }
 
@@ -125,26 +121,35 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
     box-sizing: border-box;
 }
 .ai-mode-selector input[type="radio"] { display: none; }
+
 .ai-mode-label {
     position: relative; z-index: 2;
-    display: flex; align-items: center; gap: 6px;
-    padding: 0 18px; /* Iets bredere padding voor stabiliteit */
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 0; /* Padding weggehaald, we gebruiken nu vaste breedtes */
     font-size: 0.85rem; font-weight: bold;
     color: #4a5568; cursor: pointer; transition: color 0.3s ease;
     height: 100%;
 }
+
+/* Vaste breedtes voor de teksten, ongeacht de browser */
+label[for="mode-claude"] { width: 100px; }
+label[for="mode-dual"] { width: 165px; }
+
 .mode-icon { height: 16px; width: auto; }
+
 .ai-mode-slider {
     position: absolute; top: 3px; bottom: 3px; left: 3px;
     background-color: #ffffff; border-radius: 26px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    /* Animatie op zowel het schuiven als het verbreden */
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     z-index: 1;
 }
 
-/* 🍎 APPLE FIXES: Schuifjes iets breder gemaakt zodat iPad letters passen */
-#mode-claude:checked ~ .ai-mode-slider { transform: translateX(0); width: 105px; }
-#mode-dual:checked ~ .ai-mode-slider { transform: translateX(105px); width: 185px; }
+/* De schuifjes volgen exact de vaste wiskundige afmetingen van de labels */
+#mode-claude:checked ~ .ai-mode-slider { transform: translateX(0); width: 100px; }
+#mode-dual:checked ~ .ai-mode-slider { transform: translateX(100px); width: 165px; }
+
 .ai-mode-selector input[type="radio"]:checked + label { color: #2094D0; }
 
 #mode-claude:checked ~ .ai-mode-slider { transform: translateX(0); width: 95px; }
