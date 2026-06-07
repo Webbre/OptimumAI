@@ -141,11 +141,50 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
 #mode-dual:checked ~ .ai-mode-slider { transform: translateX(95px); width: 175px; }
 .ai-mode-selector input[type="radio"]:checked + label { color: #2094D0; }
 
-/* Optimaliseer Knoppen */
-#optimizeContainer { position: absolute; top: 38px; right: 10px; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s; }
-#optimizeBtn { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); border: none; border-radius: 15px; padding: 5px 12px; font-size: 0.8rem; font-weight: bold; color: white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 5px; }
-#undoOptimizeBtn { display: none; background: #f0f0f0; border: 1px solid #ccc; border-radius: 15px; padding: 5px 12px; font-size: 0.8rem; color: #555; cursor: pointer; }
+/* --- Optimaliseer Knoppen (Geüpdatet voor mobiel & overlap) --- */
+#optimizeContainer { 
+    position: absolute; 
+    top: 48px; /* Uitgelijnd met de bovenkant van het tekstvak op desktop */
+    right: 15px; 
+    opacity: 0; 
+    visibility: hidden; 
+    transition: opacity 0.3s ease, visibility 0.3s; 
+    z-index: 50; /* Zorgt dat de knop áltijd helemaal vooraan zweeft */
+}
 
+/* 📱 Zakt automatisch naar beneden als het menu op mobiel uitklapt naar 2 regels */
+@media screen and (max-width: 768px) {
+    #optimizeContainer {
+        top: 92px; 
+    }
+}
+
+#optimizeBtn { 
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); 
+    border: none; 
+    border-radius: 15px; 
+    padding: 5px 12px; 
+    font-size: 0.8rem; 
+    font-weight: bold; 
+    color: white; 
+    cursor: pointer; 
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15); 
+    display: flex; 
+    align-items: center; 
+    gap: 5px; 
+}
+
+#undoOptimizeBtn { 
+    display: none; 
+    background: #f0f0f0; 
+    border: 1px solid #ccc; 
+    border-radius: 15px; 
+    padding: 5px 12px; 
+    font-size: 0.8rem; 
+    color: #555; 
+    cursor: pointer; 
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
 /* Attachment Menu */
 #attachMenuWrapper { position: relative; display: inline-flex; align-items: center; }
 #attachToggleBtn { background: #f0f0f0; border: none; border-radius: 10px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #555; transition: transform 0.3s ease, background-color 0.2s; }
