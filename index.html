@@ -4,9 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ewout's Optimum AI</title>
+    
     <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="shortcut icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="OptimumAI" />
+    <link rel="manifest" href="site.webmanifest" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        .welcome-brand-logos {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            margin-top: 25px;
+        }
+        .ai-logo-svg {
+            height: 28px;
+            opacity: 0.4;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .ai-logo-svg:hover {
+            opacity: 0.85;
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 <body>
 
@@ -14,10 +40,14 @@
         <div class="brand-container">
             <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#fadf00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="5" fill="#fadf00"></circle>
-                <line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                <line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
             </svg>
             <div class="mobile-title">Optimum AI tool</div>
         </div>
@@ -28,15 +58,20 @@
         <div class="sidebar-header" style="display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box;">
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#fadf00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px;">
                 <circle cx="12" cy="12" r="5" fill="#fadf00"></circle>
-                <line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                <line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
             </svg>
             <h2 id="sidebar-titel" style="margin: 0; display: flex; align-items: center; justify-content: center; width: 100%; position: relative;">
                 <span style="flex: 1; text-align: center;">Optimum AI tool</span>
             </h2>
         </div>
+
         <button class="new-chat-btn" id="newChatBtn">+ Nieuw gesprek</button>
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Zoek in chats...">
@@ -48,6 +83,7 @@
         <div id="chat-window"></div>
         <div id="input-container">
             <div class="input-wrapper">
+                
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; flex-wrap: wrap; gap: 10px;">
                     <select id="chatCategory" class="category-select">
                         <option value="Privé">🏠 Privé</option>
@@ -55,23 +91,23 @@
                     </select>
                     
                     <div class="ai-mode-selector">
-    <input type="radio" id="mode-claude" name="ai-workflow" value="single" checked>
-    <label for="mode-claude" class="ai-mode-label">
-        <img src="claude-logo.svg" class="mode-icon" alt="Claude"> Claude
-    </label>
+                        <input type="radio" id="mode-claude" name="ai-workflow" value="single" checked>
+                        <label for="mode-claude" class="ai-mode-label">
+                            <img src="claude-logo.svg" class="mode-icon" alt="Claude"> Claude
+                        </label>
 
-    <input type="radio" id="mode-dual" name="ai-workflow" value="dual">
-    <label for="mode-dual" class="ai-mode-label">
-        <img src="claude-logo.svg" class="mode-icon" alt="Claude"> 
-        <img src="gemini-logo.svg" class="mode-icon" alt="Gemini"> Claude & Gemini
-    </label>
-    <div class="ai-mode-slider"></div>
-</div>
+                        <input type="radio" id="mode-dual" name="ai-workflow" value="dual">
+                        <label for="mode-dual" class="ai-mode-label">
+                            <img src="claude-logo.svg" class="mode-icon" alt="Claude"> 
+                            <img src="gemini-logo.svg" class="mode-icon" alt="Gemini"> Claude & Gemini
+                        </label>
+                        <div class="ai-mode-slider"></div>
+                    </div>
 
                     <div id="attachmentPreview"></div>
                 </div>
 
-                <textarea id="userPrompt" rows="5" placeholder="Stel een vraag..."></textarea>
+                <textarea id="userPrompt" rows="5" placeholder="Stel een vraag... (Shift + Enter voor een nieuwe regel)"></textarea>
                 
                 <div id="optimizeContainer">
                     <button id="optimizeBtn">✨ Optimaliseer prompt</button>
@@ -81,22 +117,69 @@
                 <div class="controls">
                     <input type="file" id="pdfAttachment" accept="application/pdf" style="display: none;" multiple>
                     <input type="file" id="imgAttachment" accept="image/png, image/jpeg, image/webp" style="display: none;" multiple>
+                    
                     <div id="attachMenuWrapper">
                         <button id="attachToggleBtn" title="Bestand toevoegen">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
                         </button>
+
                         <div id="attachMenu">
                             <button id="addPdfBtn" class="attach-menu-btn">PDF toevoegen</button>
                             <button id="addImgBtn" class="attach-menu-btn">Foto toevoegen</button>
                         </div>
                     </div>
+
                     <button class="send-btn" id="sendBtn">Verstuur</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <div id="settings-modal">
+        <h3>Instellingen (Modellen)</h3>
+        <label style="font-size:12px; font-weight:bold;">Gemini Model:</label>
+        <select id="geminiModel">
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+            <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</option>
+            <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite</option>
+            <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+        </select>
+        <label style="font-size:12px; font-weight:bold;">Claude Model:</label>
+        <select id="claudeModel">
+            <option value="claude-opus-4-8">Claude Opus 4.8</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-haiku-4-5">Claude Haiku 4.5</option>
+        </select>
+        <button id="saveSettingsBtn">Sluiten en opslaan</button>
+    </div>
+
+    <div id="auth-screen">
+        <div class="auth-box">
+            <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#fadf00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:15px;">
+                <circle cx="12" cy="12" r="5" fill="#fadf00"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <h2>Optimum AI tool</h2>
+            <p>Log in om toegang te krijgen</p>
+            <input type="email" id="authEmail" placeholder="E-mailadres">
+            <input type="password" id="authPassword" placeholder="Wachtwoord">
+            <button id="loginBtn">Inloggen</button>
+        </div>
+    </div>
+
     <script type="module" src="app.js"></script>
+
 </body>
 </html>
