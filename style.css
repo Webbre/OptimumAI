@@ -138,7 +138,7 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
     z-index: 1;
 }
 #mode-claude:checked ~ .ai-mode-slider { transform: translateX(0); width: 95px; }
-#mode-dual:checked ~ .ai-mode-slider { transform: translateX(95px); width: 130px; }
+#mode-dual:checked ~ .ai-mode-slider { transform: translateX(95px); width: 175px; }
 .ai-mode-selector input[type="radio"]:checked + label { color: #2094D0; }
 
 /* Optimaliseer Knoppen */
