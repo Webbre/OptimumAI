@@ -128,7 +128,8 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
 .ai-mode-label {
     position: relative; z-index: 2;
     display: flex; align-items: center; gap: 6px;
-    padding: 0 16px; font-size: 0.85rem; font-weight: bold;
+    padding: 0 18px; /* Iets bredere padding voor stabiliteit */
+    font-size: 0.85rem; font-weight: bold;
     color: #4a5568; cursor: pointer; transition: color 0.3s ease;
     height: 100%;
 }
@@ -140,6 +141,11 @@ textarea:focus { outline: none; border-color: #2094D0; box-shadow: 0 0 0 3px rgb
     transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     z-index: 1;
 }
+
+/* 🍎 APPLE FIXES: Schuifjes iets breder gemaakt zodat iPad letters passen */
+#mode-claude:checked ~ .ai-mode-slider { transform: translateX(0); width: 105px; }
+#mode-dual:checked ~ .ai-mode-slider { transform: translateX(105px); width: 185px; }
+.ai-mode-selector input[type="radio"]:checked + label { color: #2094D0; }
 
 #mode-claude:checked ~ .ai-mode-slider { transform: translateX(0); width: 95px; }
 #mode-dual:checked ~ .ai-mode-slider { transform: translateX(95px); width: 175px; }
